@@ -1,0 +1,118 @@
+/***********************************************************************
+Cons - Class representing an interior node in a binary tree, primarily
+used to construct lists.
+Copyright (c) 2017-2026 Oliver Kreylos
+
+This file is part of the Lambda Programming Language.
+
+The Lambda Programming Language is free software; you can redistribute
+it and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 2 of the
+License, or (at your option) any later version.
+
+The Lambda Programming Language is distributed in the hope that it will
+be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with the Lambda Programming Language; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+***********************************************************************/
+
+#ifndef CONS_INCLUDED
+#define CONS_INCLUDED
+
+#include <vector>
+
+#include "Thing.h"
+#include "Function.h"
+
+namespace Lambda {
+
+class Cons:public Thing
+	{
+	/* Elements: */
+	private:
+	ThingPtr children[2]; // The two children
+	
+	/* Constructors and destructors: */
+	public:
+	Cons(Thing& sCar,Thing& sCdr) // Creates a Cons from the two given children
+		{
+		children[0]=&sCar;
+		children[1]=&sCdr;
+		}
+	
+	/* Methods from class Thing: */
+	static const char* classIsA(void);
+	virtual std::string isA(void) const
+		{
+		return classIsA();
+		}
+	virtual ThingPtr evaluate(Context& context);
+	virtual std::ostream& print(std::ostream& os) const;
+	
+	/* New methods: */
+	Thing& car(void) // Returns the left child
+		{
+		return *children[0];
+		}
+	Thing& cdr(void) // Returns the right child
+		{
+		return *children[1];
+		}
+	bool isList(void) const; // Returns true if this Cons object represents a "proper" list
+	void checkList(void) const; // Checks if this Cons object represents a "proper" list; throws exception if not
+	std::vector<ThingPtr> getList(void); // Returns the elements of a proper list as a vector
+	static Thing& car(Thing& thing) // Returns the left child of the given thing if it is a Cons; throws exception otherwise
+		{
+		/* Try casting the given thing to a Cons and return that Cons's car: */
+		return *to<Cons>(thing).children[0];
+		}
+	static Thing& cdr(Thing& thing) // Returns the right child of the given thing if it is a Cons; throws exception otherwise
+		{
+		/* Try casting the given thing to a Cons and return that Cons's cdr: */
+		return *to<Cons>(thing).children[1];
+		}
+	static bool isList(const Thing& thing); // Returns true if the given thing is a "proper" list
+	static void checkList(const Thing& thing); // Checks if the given thing is a "proper" list; returns exception if not
+	};
+
+/******************************************
+Function classes dealing with Cons objects:
+******************************************/
+
+class MakeCons:public Function // Class to make a Cons from a car and a cdr
+	{
+	/* Methods from class Thing: */
+	public:
+	std::ostream& print(std::ostream& os) const;
+	
+	/* Methods from class Function: */
+	ThingPtr evaluate(ThingPtr arguments,Context& context);
+	};
+
+class Car:public Function // Class to return the car of a Cons
+	{
+	/* Methods from class Thing: */
+	public:
+	std::ostream& print(std::ostream& os) const;
+	
+	/* Methods from class Function: */
+	ThingPtr evaluate(ThingPtr arguments,Context& context);
+	};
+
+class Cdr:public Function // Class to return the cdr of a Cons
+	{
+	/* Methods from class Thing: */
+	public:
+	std::ostream& print(std::ostream& os) const;
+	
+	/* Methods from class Function: */
+	ThingPtr evaluate(ThingPtr arguments,Context& context);
+	};
+
+}
+
+#endif

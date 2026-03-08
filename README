@@ -1,0 +1,40 @@
+========================================================================
+README for the Lambda Programming Language version 1.0
+Copyright (c) 2017-2026 Oliver Kreylos
+========================================================================
+
+Overview
+========
+
+The Lambda Programming Language is a baby programming language (as in,
+it's a wee little language, not a language for babies.) It runs in an
+interactive execution environment. It implements lambda calculus.
+
+Requirements
+============
+
+The Lambda Programming Language requires the Vrui VR development
+toolkit, version 15.0-001 or later, and therefore runs on UNIX-like
+operating systems.
+Technically speaking, the Lambda Programming Language only requires
+the Misc and Threads sub-libraries of the Vrui VR development toolkit,
+but who's keeping track.
+
+Quick Installation Guide for the Impatient
+==========================================
+
+0. Install the Vrui VR toolkit. Note the path to Vrui's build system,
+   printed at the beginning of Vrui's build process. By default, the
+   path is /usr/local/share/Vrui-<version>/make.
+
+1. Clone or download the Lambda Programming Language's git repository,
+   say into ~/src/Lambda.
+
+2. Change into the  Lambda Programming Language's base directory, say
+   > cd ~/src/Lambda
+
+3. Build the Lambda Programming Language
+   > make VRUI_MAKEDIR=<path to Vrui's build system>
+
+4. Run the Lambda Programming Language
+   > ./bin/Lambda
