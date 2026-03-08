@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "Parser.h"
 
+#include <math.h>
 #include <string>
 
 #include "Error.h"
@@ -31,6 +32,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "Boolean.h"
 #include "Name.h"
 #include "Integer.h"
+#include "FloatingPoint.h"
 
 namespace Lambda {
 
@@ -102,43 +104,133 @@ ThingPtr parse(InputStream& is)
 		}
 	else if(is.token())
 		{
-		/* Parse a name, or maybe an integer: */
+		/* Parse a name, or maybe an integer or a floating-point: */
 		std::string name;
+		bool first=true;
 		bool maybeInteger=true;
+		bool maybeFloatingPoint=true;
 		bool negate=false;
 		long integer=0;
+		double floatingPoint=0.0;
+		double floatingPointBase=1.0;
+		long periodDigits=0;
 		bool haveDigits=false;
+		bool havePeriod=false;
+		bool haveExponent=false;
+		bool exponentFirst=true;
+		bool negateExponent=false;
+		long exponent=0;
+		bool haveExponentDigits=false;
 		
-		/* Check the first character for a plus or minus sign: */
-		int first=is.get();
-		name.push_back(first);
-		if(first=='+'||first=='-')
-			negate=first=='-';
-		else if(first>='0'&&first<='9')
+		/* Handle the token's characters: */
+		do
 			{
-			integer=long(first-'0');
-			haveDigits=true;
-			}
-		else
-			maybeInteger=false;
-		
-		/* Handle the rest of the token's characters: */
-		while(is.token())
-			{
+			/* Get the next character and append it to the name: */
 			int next=is.get();
 			name.push_back(next);
-			if(maybeInteger&&next>='0'&&next<='9')
+			
+			/* Accumulate a potential integer: */
+			if(maybeInteger)
 				{
-				integer=integer*10L+long(next-'0');
-				haveDigits=true;
+				if(next=='+'||next=='-')
+					{
+					maybeInteger=first;
+					negate=next=='-';
+					}
+				else if(next>='0'&&next<='9')
+					{
+					integer=integer*10L+long(next-'0');
+					haveDigits=true;
+					}
+				else
+					maybeInteger=false;
 				}
-			else
-				maybeInteger=false;
+			
+			/* Accumulate a potential floating-point: */
+			if(maybeFloatingPoint)
+				{
+				if(haveExponent)
+					{
+					if(next=='+'||next=='-')
+						{
+						maybeFloatingPoint=exponentFirst;
+						negateExponent=next=='-';
+						}
+					else if(next>='0'&&next<='9')
+						{
+						exponent=exponent*10L+long(next-'0');
+						haveExponentDigits=true;
+						}
+					else
+						maybeFloatingPoint=false;
+					
+					exponentFirst=false;
+					}
+				else if(havePeriod)
+					{
+					if(next>='0'&&next<='9')
+						{
+						floatingPoint=floatingPoint*10.0+double(next-'0');
+						floatingPointBase*=10.0;
+						++periodDigits;
+						haveDigits=true;
+						}
+					else if(next=='e'||next=='E')
+						haveExponent=true;
+					else
+						maybeFloatingPoint=false;
+					}
+				else
+					{
+					if(next=='+'||next=='-')
+						{
+						maybeFloatingPoint=first;
+						negate=next=='-';
+						}
+					else if(next>='0'&&next<='9')
+						{
+						floatingPoint=floatingPoint*10.0+double(next-'0');
+						haveDigits=true;
+						}
+					else if(next=='.')
+						havePeriod=true;
+					else if(next=='e'||next=='E')
+						haveExponent=true;
+					else
+						maybeFloatingPoint=false;
+					}
+				}
+			
+			first=false;
 			}
+		while(is.token());
 		
-		/* Return an integer or a name: */
+		/* Return an integer, or a floating-point, or a name: */
 		if(maybeInteger&&haveDigits)
-			result=new Integer(negate?-integer:integer);
+			{
+			/* Apply any modifiers to the final integer value: */
+			if(negate)
+				integer=-integer;
+			
+			result=new Integer(integer);
+			}
+		else if(maybeFloatingPoint&&haveDigits&&(!haveExponent||haveExponentDigits))
+			{
+			/* Apply any modifiers to the final floating-point value: */
+			if(haveExponent)
+				{
+				if(negateExponent)
+					exponent=-exponent;
+				exponent-=periodDigits;
+				if(exponent!=0)
+					floatingPoint*=pow(10.0,double(exponent));
+				}
+			else if(havePeriod)
+				floatingPoint/=floatingPointBase;
+			if(negate)
+				floatingPoint=-floatingPoint;
+			result=new FloatingPoint(floatingPoint);
+			}
 		else
 			result=new Name(name);
 		}

@@ -36,7 +36,7 @@ int main(void)
 	
 	/* Read, evaluate, and print expressions until the user closes the connection: */
 	std::cout<<"Welcome to the Lambda Programming Language!"<<std::endl;
-	std::cout<<"Quit by pressing Ctrl+D at the prompt."<<std::endl<<std::endl;
+	std::cout<<"Press Ctrl+D at the prompt to say goodbye."<<std::endl<<std::endl;
 	std::cout<<"Lambda> "<<std::flush;
 	Lambda::InputStream inputStream(std::cin);
 	while(true)

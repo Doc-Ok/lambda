@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "Load.h"
 #include "Lambda.h"
 #include "Integer.h"
+#include "FloatingPoint.h"
 
 namespace Lambda {
 
@@ -257,11 +258,11 @@ class Lambda:public Function // Class to make a Lambda from an argument list
 		}
 	};
 
-/**********************
-Functions with Integer:
-**********************/
+/*******************************************
+Functions with Integer and/or FloatingPoint:
+*******************************************/
 
-class IntegerAdd:public Function // Class to add any number of Integers
+class Add:public Function // Class to add any number of Integers and/or FloatingPoints
 	{
 	/* Methods from class Thing: */
 	public:
@@ -279,15 +280,35 @@ class IntegerAdd:public Function // Class to add any number of Integers
 		std::vector<ThingPtr> values=evalArgs(arguments,context);
 		
 		/* Sum up all arguments: */
-		long result=0;
+		double floatingPoint=0.0;
+		long integer=0;
+		bool maybeInteger=true;
 		for(std::vector<ThingPtr>::iterator vIt=values.begin();vIt!=values.end();++vIt)
-			result+=Integer::getValue(**vIt);
+			{
+			if(maybeInteger)
+				{
+				Integer* i=toPtr<Integer>(**vIt);
+				if(i!=0)
+					{
+					integer+=i->getValue();
+					floatingPoint+=double(i->getValue());
+					}
+				else
+					maybeInteger=false;
+				}
+			
+			if(!maybeInteger)
+				floatingPoint+=FloatingPoint::getValue(**vIt);
+			}
 		
-		return new Integer(result);
+		if(maybeInteger)
+			return new Integer(integer);
+		else
+			return new FloatingPoint(floatingPoint);
 		}
 	};
 
-class IntegerSub:public Function // Class to subtract any number of Integers
+class Sub:public Function // Class to subtract any number of Integers and/or FloatingPoints
 	{
 	/* Methods from class Thing: */
 	public:
@@ -307,22 +328,57 @@ class IntegerSub:public Function // Class to subtract any number of Integers
 		if(values.size()==1)
 			{
 			/* Negate the first argument: */
-			return new Integer(-Integer::getValue(*values.front()));
+			Integer* i=toPtr<Integer>(*values.front());
+			if(i!=0)
+				return new Integer(-i->getValue());
+			else
+				return new FloatingPoint(-FloatingPoint::getValue(*values.front()));
 			}
 		else
 			{
 			/* Subtract all following arguments from the first argument: */
 			std::vector<ThingPtr>::iterator vIt=values.begin();
-			long result=Integer::getValue(**vIt);
+			double floatingPoint;
+			long integer;
+			bool maybeInteger=true;
+			Integer* i=toPtr<Integer>(**vIt);
+			if(i!=0)
+				{
+				integer=i->getValue();
+				floatingPoint=double(i->getValue());
+				}
+			else
+				{
+				floatingPoint=FloatingPoint::getValue(**vIt);
+				maybeInteger=false;
+				}
 			for(++vIt;vIt!=values.end();++vIt)
-				result-=Integer::getValue(**vIt);
+				{
+				if(maybeInteger)
+					{
+					Integer* i=toPtr<Integer>(**vIt);
+					if(i!=0)
+						{
+						integer-=i->getValue();
+						floatingPoint-=double(i->getValue());
+						}
+					else
+						maybeInteger=false;
+					}
+				
+				if(!maybeInteger)
+					floatingPoint-=FloatingPoint::getValue(**vIt);
+				}
 			
-			return new Integer(result);
+			if(maybeInteger)
+				return new Integer(integer);
+			else
+				return new FloatingPoint(floatingPoint);
 			}
 		}
 	};
 
-class IntegerMult:public Function // Class to multiply any number of Integers
+class Mult:public Function // Class to multiply any number of Integers and/or FloatingPoints
 	{
 	/* Methods from class Thing: */
 	public:
@@ -340,11 +396,128 @@ class IntegerMult:public Function // Class to multiply any number of Integers
 		std::vector<ThingPtr> values=evalArgs(arguments,context);
 		
 		/* Multiply up all arguments: */
-		long result=1;
+		double floatingPoint=1.0;
+		long integer=1;
+		bool maybeInteger=true;
 		for(std::vector<ThingPtr>::iterator vIt=values.begin();vIt!=values.end();++vIt)
-			result*=Integer::getValue(**vIt);
+			{
+			if(maybeInteger)
+				{
+				Integer* i=toPtr<Integer>(**vIt);
+				if(i!=0)
+					{
+					integer*=i->getValue();
+					floatingPoint*=double(i->getValue());
+					}
+				else
+					maybeInteger=false;
+				}
+			
+			if(!maybeInteger)
+				floatingPoint*=FloatingPoint::getValue(**vIt);
+			}
 		
-		return new Integer(result);
+		if(maybeInteger)
+			return new Integer(integer);
+		else
+			return new FloatingPoint(floatingPoint);
+		}
+	};
+
+class Div:public Function // Class to divide any number of Integers and/or FloatingPoints
+	{
+	/* Methods from class Thing: */
+	public:
+	std::ostream& print(std::ostream& os) const
+		{
+		os<<"(Builtin::Div expr1 ... exprn) |-> expr1 / ... / exprn";
+		
+		return os;
+		}
+	
+	/* Methods from class Function: */
+	ThingPtr evaluate(ThingPtr arguments,Context& context)
+		{
+		/* Evaluate all arguments: */
+		std::vector<ThingPtr> values=evalArgs(arguments,context);
+		
+		if(values.size()==1)
+			{
+			/* Invert the first argument: */
+			Integer* i=toPtr<Integer>(*values.front());
+			if(i!=0)
+				{
+				if(i->getValue()==0)
+					throw Error("Division by zero");
+				else if(i->getValue()==1)
+					return values.front();
+				else
+					return new FloatingPoint(1.0/double(i->getValue()));
+				}
+			else
+				{
+				double value=FloatingPoint::getValue(*values.front());
+				if(value==0.0)
+					throw Error("Division by zero");
+				else
+					return new FloatingPoint(1.0/value);
+				}
+			}
+		else
+			{
+			/* Divide the first argument by all subsequent arguments: */
+			std::vector<ThingPtr>::iterator vIt=values.begin();
+			double floatingPoint;
+			long integer;
+			bool maybeInteger=true;
+			Integer* i=toPtr<Integer>(**vIt);
+			if(i!=0)
+				{
+				integer=i->getValue();
+				floatingPoint=double(i->getValue());
+				}
+			else
+				{
+				floatingPoint=FloatingPoint::getValue(**vIt);
+				maybeInteger=false;
+				}
+			for(++vIt;vIt!=values.end();++vIt)
+				{
+				if(maybeInteger)
+					{
+					Integer* i=toPtr<Integer>(**vIt);
+					if(i!=0)
+						{
+						if(i->getValue()==0)
+							throw Error("Division by zero");
+						else if(integer%i->getValue()==0)
+							integer/=i->getValue();
+						else
+							{
+							floatingPoint=double(integer)/double(i->getValue());
+							maybeInteger=false;
+							}
+						}
+					else
+						{
+						floatingPoint=double(integer)/FloatingPoint::getValue(**vIt);
+						maybeInteger=false;
+						}
+					}
+				else
+					{
+					double value=FloatingPoint::getValue(**vIt);
+					if(value==0.0)
+						throw Error("Division by zero");
+					floatingPoint/=value;
+					}
+				}
+			
+			if(maybeInteger)
+				return new Integer(integer);
+			else
+				return new FloatingPoint(floatingPoint);
+			}
 		}
 	};
 
@@ -374,9 +547,10 @@ void defBuiltins(Context& context)
 	
 	context.setThing("lambda",*new Builtin::Lambda);
 	
-	context.setThing("+",*new Builtin::IntegerAdd);
-	context.setThing("-",*new Builtin::IntegerSub);
-	context.setThing("*",*new Builtin::IntegerMult);
+	context.setThing("+",*new Builtin::Add);
+	context.setThing("-",*new Builtin::Sub);
+	context.setThing("*",*new Builtin::Mult);
+	context.setThing("/",*new Builtin::Div);
 	}
 
 }
