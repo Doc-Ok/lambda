@@ -66,7 +66,7 @@ class String
 	
 	/* Constructors and destructors: */
 	public:
-	String(void) // Creates a null string, it't not even empty
+	String(void) // Creates a null string, it's not even empty
 		:rep(0)
 		{
 		}
