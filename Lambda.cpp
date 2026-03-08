@@ -31,11 +31,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 namespace Lambda {
 
-/***********************************
-Methods of class Lambda::Expression:
-***********************************/
+/***********************
+Methods of class Lambda:
+***********************/
 
-Lambda::Expression::Expression(ThingPtr arguments,Context& sClosure)
+Lambda::Lambda(ThingPtr arguments,Context& sClosure)
 	:closure(sClosure.clone())
 	{
 	/* Check that the arguments thing is a non-empty proper list: */
@@ -68,14 +68,18 @@ Lambda::Expression::Expression(ThingPtr arguments,Context& sClosure)
 		body.push_back(&cons->car());
 	}
 
-const char* Lambda::Expression::classIsA(void)
+const char* Lambda::classIsA(void)
 	{
-	return "a Lambda Expression";
+	return "a Lambda";
 	}
 
-std::ostream& Lambda::Expression::print(std::ostream& os) const
+std::ostream& Lambda::print(std::ostream& os) const
 	{
-	os<<"(lambda";
+	/* Print the name of a named lambda or just lambda for an unnamed one: */
+	if(name.empty())
+		os<<"(lambda";
+	else
+		os<<'('<<name;
 	
 	/* Print the list of argument names: */
 	for(std::vector<std::string>::const_iterator aIt=argumentNames.begin();aIt!=argumentNames.end();++aIt)
@@ -92,7 +96,7 @@ std::ostream& Lambda::Expression::print(std::ostream& os) const
 	return os;
 	}
 
-ThingPtr Lambda::Expression::evaluate(ThingPtr arguments,Context& context)
+ThingPtr Lambda::evaluate(ThingPtr arguments,Context& context)
 	{
 	/* Check the argument list: */
 	checkArity(argumentNames.size(),arguments);
@@ -121,27 +125,11 @@ ThingPtr Lambda::Expression::evaluate(ThingPtr arguments,Context& context)
 	return result;
 	}
 
-void Lambda::Expression::setName(const std::string& newName)
+void Lambda::setName(const std::string& newName)
 	{
 	/* Only take the given name if no name has been assigned yet: */
 	if(name.empty())
 		name=newName;
-	}
-
-/***********************
-Methods of class Lambda:
-***********************/
-
-std::ostream& Lambda::print(std::ostream& os) const
-	{
-	os<<"(BuiltinLambda argList bodyList) |-> (lambda argList) |-> (bodyList)"<<std::endl;
-	return os;
-	}
-
-ThingPtr Lambda::evaluate(ThingPtr arguments,Context& context)
-	{
-	/* Create a new lambda expression from the given argument: */
-	return new Expression(arguments,context);
 	}
 
 }

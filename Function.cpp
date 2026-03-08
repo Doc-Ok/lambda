@@ -111,6 +111,54 @@ ThingPtr Function::evalArg(size_t n,ThingPtr arguments,Context& context)
 	return cons->car().evaluate(context);
 	}
 
+std::vector<Thing*> Function::getArgs(ThingPtr arguments)
+	{
+	/* Collect all arguments in the list: */
+	Thing* thing=arguments.getPointer();
+	std::vector<Thing*> result;
+	while(true)
+		{
+		/* Check that the current thing is a Cons: */
+		Cons* cons=dynamic_cast<Cons*>(thing);
+		if(cons==0)
+			break;
+		
+		/* Retrieve an argument, and go to the thing's cdr: */
+		result.push_back(&cons->car());
+		thing=&cons->cdr();
+		}
+	
+	/* Check that the remaining thing is a Null: */
+	if(dynamic_cast<Null*>(thing)==0)
+		throw IsNotAError(*arguments,"a function argument list");
+	
+	return result;
+	}
+
+std::vector<ThingPtr> Function::evalArgs(ThingPtr arguments,Context& context)
+	{
+	/* Collect the results of evaluating all arguments in the list: */
+	Thing* thing=arguments.getPointer();
+	std::vector<ThingPtr> result;
+	while(true)
+		{
+		/* Check that the current thing is a Cons: */
+		Cons* cons=dynamic_cast<Cons*>(thing);
+		if(cons==0)
+			break;
+		
+		/* Retrieve and evaluate an argument, and go to the thing's cdr: */
+		result.push_back(cons->car().evaluate(context));
+		thing=&cons->cdr();
+		}
+	
+	/* Check that the remaining thing is a Null: */
+	if(dynamic_cast<Null*>(thing)==0)
+		throw IsNotAError(*arguments,"a function argument list");
+	
+	return result;
+	}
+
 const char* Function::classIsA(void)
 	{
 	return "a Function";

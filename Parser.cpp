@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "Quote.h"
 #include "Boolean.h"
 #include "Name.h"
+#include "Integer.h"
 
 namespace Lambda {
 
@@ -101,13 +102,45 @@ ThingPtr parse(InputStream& is)
 		}
 	else if(is.token())
 		{
-		/* Parse a name: */
+		/* Parse a name, or maybe an integer: */
 		std::string name;
-		do
-			name.push_back(is.get());
-		while(is.token());
+		bool maybeInteger=true;
+		bool negate=false;
+		long integer=0;
+		bool haveDigits=false;
 		
-		result=new Name(name);
+		/* Check the first character for a plus or minus sign: */
+		int first=is.get();
+		name.push_back(first);
+		if(first=='+'||first=='-')
+			negate=first=='-';
+		else if(first>='0'&&first<='9')
+			{
+			integer=long(first-'0');
+			haveDigits=true;
+			}
+		else
+			maybeInteger=false;
+		
+		/* Handle the rest of the token's characters: */
+		while(is.token())
+			{
+			int next=is.get();
+			name.push_back(next);
+			if(maybeInteger&&next>='0'&&next<='9')
+				{
+				integer=integer*10L+long(next-'0');
+				haveDigits=true;
+				}
+			else
+				maybeInteger=false;
+			}
+		
+		/* Return an integer or a name: */
+		if(maybeInteger&&haveDigits)
+			result=new Integer(negate?-integer:integer);
+		else
+			result=new Name(name);
 		}
 	else if(!is.eof())
 		throw makeError("Unexpected '%c' while parsing",is.get());

@@ -1,5 +1,6 @@
 /***********************************************************************
-Null - Class representing the empty list, or null thing.
+Eval - Class for a function that evaluates and returns its arguments.
+Thus, it is the inverse of Quote.
 Copyright (c) 2017-2026 Oliver Kreylos
 
 This file is part of the Lambda Programming Language.
@@ -19,25 +20,30 @@ with the Lambda Programming Language; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ***********************************************************************/
 
-#ifndef NULL_INCLUDED
-#define NULL_INCLUDED
+#include "Eval.h"
 
-#include "Thing.h"
+#include <iostream>
 
 namespace Lambda {
 
-class Null:public Thing
+/*********************
+Methods of class Eval:
+*********************/
+
+std::ostream& Eval::print(std::ostream& os) const
 	{
-	/* Methods from class Thing: */
-	public:
-	static const char* classIsA(void);
-	virtual std::string isA(void) const
-		{
-		return classIsA();
-		}
-	virtual std::ostream& print(std::ostream& os) const;
-	};
+	os<<"(BuiltinEval expr) |-> (eval expr)";
+	
+	return os;
+	}
+
+ThingPtr Eval::evaluate(ThingPtr arguments,Context& context)
+	{
+	/* Check the argument list: */
+	checkArity(1,arguments);
+	
+	/* Evaluate the argument twice: */
+	return evalArg(0,arguments,context)->evaluate(context);
+	}
 
 }
-
-#endif

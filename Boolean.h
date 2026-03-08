@@ -23,7 +23,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #define BOOLEAN_INCLUDED
 
 #include "Thing.h"
-#include "Function.h"
 
 namespace Lambda {
 
@@ -55,43 +54,9 @@ class Boolean:public Thing
 		}
 	static bool getValue(const Thing& thing) // Returns the boolean value of the given thing if it is a Boolean; throws exception otherwise
 		{
-		/* Try casting the given thing to a Boolean and return that Boolean's name: */
+		/* Try casting the given thing to a Boolean and return that Boolean's value: */
 		return to<Boolean>(thing).value;
 		}
-	};
-
-/*********************************************
-Function classes dealing with Boolean objects:
-*********************************************/
-
-class Not:public Function // Logical inversion
-	{
-	/* Methods from class Thing: */
-	public:
-	virtual std::ostream& print(std::ostream& os) const;
-	
-	/* Methods from class Function: */
-	virtual ThingPtr evaluate(ThingPtr arguments,Context& context);
-	};
-
-class And:public Function // Logical and
-	{
-	/* Methods from class Thing: */
-	public:
-	virtual std::ostream& print(std::ostream& os) const;
-	
-	/* Methods from class Function: */
-	virtual ThingPtr evaluate(ThingPtr arguments,Context& context);
-	};
-
-class Or:public Function // Logical or
-	{
-	/* Methods from class Thing: */
-	public:
-	virtual std::ostream& print(std::ostream& os) const;
-	
-	/* Methods from class Function: */
-	virtual ThingPtr evaluate(ThingPtr arguments,Context& context);
 	};
 
 }

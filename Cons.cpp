@@ -40,11 +40,8 @@ const char* Cons::classIsA(void)
 
 ThingPtr Cons::evaluate(Context& context)
 	{
-	/* Evaluate the car and cast the result to a Function: */
-	FunctionPtr function=toPtr<Function>(*children[0]->evaluate(context));
-	
-	/* Evaluate the function with the cdr as the argument: */
-	return function->evaluate(children[1],context);
+	/* Evaluate the car, cast the result to a Function, and evaluate that Function: */
+	return Function::evaluate(*children[0]->evaluate(context),children[1],context);
 	}
 
 std::ostream& Cons::print(std::ostream& os) const
@@ -100,9 +97,10 @@ bool Cons::isList(void) const
 	return dynamic_cast<const Null*>(cdr)!=0;
 	}
 
-void Cons::checkList(void) const
+size_t Cons::checkList(void) const
 	{
 	/* Walk along a chain of cdrs until we encounter something other than a Cons: */
+	size_t result=1; // We need to count this Cons
 	const Thing* cdr=this->children[1].getPointer();
 	while(true)
 		{
@@ -113,11 +111,14 @@ void Cons::checkList(void) const
 		
 		/* Go to the next cdr: */
 		cdr=cdrCons->children[1].getPointer();
+		++result;
 		}
 	
 	/* It's not proper list if the non-Cons cdr we found is not a Null: */
 	if(dynamic_cast<const Null*>(cdr)==0)
 		throw IsNotAError(*this,"a proper list");
+	
+	return result;
 	}
 
 std::vector<ThingPtr> Cons::getList(void)
@@ -148,78 +149,24 @@ bool Cons::isList(const Thing& thing)
 	return cons!=0&&cons->isList();
 	}
 
-void Cons::checkList(const Thing& thing)
+size_t Cons::checkList(const Thing& thing)
 	{
-	/* Check if the thing is not a Null: */
-	if(dynamic_cast<const Null*>(&thing)==0)
+	/* Walk along a chain of cdrs until we encounter something other than a Cons: */
+	size_t result=0;
+	const Thing* thingPtr=&thing;
+	const Cons* cons;
+	while((cons=toPtr<Cons>(*thingPtr))!=0)
 		{
-		/* Try casting the thing to a Cons: */
-		const Cons* cons=dynamic_cast<const Cons*>(&thing);
-		
-		/* Check if the thing is a Cons and a proper list: */
-		if(cons==0||!cons->isList())
-			throw IsNotAError(thing,"a proper list");
+		/* Count the list element and go to the next one: */
+		++result;
+		thingPtr=cons->children[1].getPointer();
 		}
-	}
-
-/*************************
-Methods of class MakeCons:
-*************************/
-
-std::ostream& MakeCons::print(std::ostream& os) const
-	{
-	os<<"(BuiltinCons car cdr) |-> (car . cdr)";
 	
-	return os;
-	}
-
-ThingPtr MakeCons::evaluate(ThingPtr arguments,Context& context)
-	{
-	/* Check the argument list: */
-	checkArity(2,arguments);
+	/* It's not proper list if the first non-Cons thing we found is not a Null: */
+	if(!is<Null>(*thingPtr))
+		throw IsNotAError(thing,"a proper list");
 	
-	/* Create a new Cons from the result of evaluating the two arguments: */
-	return new Cons(*evalArg(0,arguments,context),*evalArg(1,arguments,context));
-	}
-
-/********************
-Methods of class Car:
-********************/
-
-std::ostream& Car::print(std::ostream& os) const
-	{
-	os<<"(BuiltinCar (car . cdr)) |-> car";
-	
-	return os;
-	}
-
-ThingPtr Car::evaluate(ThingPtr arguments,Context& context)
-	{
-	/* Check the argument list: */
-	checkArity(1,arguments);
-	
-	/* Return the car of the result of evaluating the first argument: */
-	return &to<Cons>(*evalArg(0,arguments,context)).car();
-	}
-
-/********************
-Methods of class Cdr:
-********************/
-
-std::ostream& Cdr::print(std::ostream& os) const
-	{
-	os<<"(BuiltinCdr (car . cdr)) |-> cdr";
-	
-	return os;
-	}
-
-ThingPtr Cdr::evaluate(ThingPtr arguments,Context& context)
-	{
-	/* Check the argument list: */
-	checkArity(1,arguments);
-	
-	/* Return the cdr of the result of evaluating the first argument: */
-	return &to<Cons>(*evalArg(0,arguments,context)).cdr();
+	return result;
 	}
 
 }

@@ -26,7 +26,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <vector>
 
 #include "Thing.h"
-#include "Function.h"
 
 namespace Lambda {
 
@@ -63,7 +62,7 @@ class Cons:public Thing
 		return *children[1];
 		}
 	bool isList(void) const; // Returns true if this Cons object represents a "proper" list
-	void checkList(void) const; // Checks if this Cons object represents a "proper" list; throws exception if not
+	size_t checkList(void) const; // Checks if this Cons object represents a "proper" list and returns the list's length if so; throws exception otherwise
 	std::vector<ThingPtr> getList(void); // Returns the elements of a proper list as a vector
 	static Thing& car(Thing& thing) // Returns the left child of the given thing if it is a Cons; throws exception otherwise
 		{
@@ -76,41 +75,7 @@ class Cons:public Thing
 		return *to<Cons>(thing).children[1];
 		}
 	static bool isList(const Thing& thing); // Returns true if the given thing is a "proper" list
-	static void checkList(const Thing& thing); // Checks if the given thing is a "proper" list; returns exception if not
-	};
-
-/******************************************
-Function classes dealing with Cons objects:
-******************************************/
-
-class MakeCons:public Function // Class to make a Cons from a car and a cdr
-	{
-	/* Methods from class Thing: */
-	public:
-	std::ostream& print(std::ostream& os) const;
-	
-	/* Methods from class Function: */
-	ThingPtr evaluate(ThingPtr arguments,Context& context);
-	};
-
-class Car:public Function // Class to return the car of a Cons
-	{
-	/* Methods from class Thing: */
-	public:
-	std::ostream& print(std::ostream& os) const;
-	
-	/* Methods from class Function: */
-	ThingPtr evaluate(ThingPtr arguments,Context& context);
-	};
-
-class Cdr:public Function // Class to return the cdr of a Cons
-	{
-	/* Methods from class Thing: */
-	public:
-	std::ostream& print(std::ostream& os) const;
-	
-	/* Methods from class Function: */
-	ThingPtr evaluate(ThingPtr arguments,Context& context);
+	static size_t checkList(const Thing& thing); // Checks if the given thing is a "proper" list and returns the list's length if so; throws exception otherwise
 	};
 
 }

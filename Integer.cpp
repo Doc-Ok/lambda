@@ -1,5 +1,5 @@
 /***********************************************************************
-Null - Class representing the empty list, or null thing.
+Integer - Class representing integer values.
 Copyright (c) 2017-2026 Oliver Kreylos
 
 This file is part of the Lambda Programming Language.
@@ -19,25 +19,26 @@ with the Lambda Programming Language; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ***********************************************************************/
 
-#ifndef NULL_INCLUDED
-#define NULL_INCLUDED
+#include "Integer.h"
 
-#include "Thing.h"
+#include <iostream>
 
 namespace Lambda {
 
-class Null:public Thing
+/************************
+Methods of class Integer:
+************************/
+
+const char* Integer::classIsA(void)
 	{
-	/* Methods from class Thing: */
-	public:
-	static const char* classIsA(void);
-	virtual std::string isA(void) const
-		{
-		return classIsA();
-		}
-	virtual std::ostream& print(std::ostream& os) const;
-	};
+	return "an Integer";
+	}
+
+std::ostream& Integer::print(std::ostream& os) const
+	{
+	os<<value;
+	
+	return os;
+	}
 
 }
-
-#endif

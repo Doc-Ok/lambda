@@ -62,7 +62,7 @@ ThingPtr Def::evaluate(ThingPtr arguments,Context& context)
 		context.setThing(name->getName(),*thing);
 		
 		/* Check if the thing is a lambda expression: */
-		Lambda::Expression* lambda=toPtr<Lambda::Expression>(*thing);
+		Lambda* lambda=toPtr<Lambda>(*thing);
 		if(lambda!=0)
 			{
 			/* Define the lambda expression's own name to allow recursion: */
@@ -86,7 +86,7 @@ ThingPtr Def::evaluate(ThingPtr arguments,Context& context)
 		Thing* funcBody=&args->cdr();
 		
 		/* Map the new lambda expression to the name: */
-		Misc::Autopointer<Lambda::Expression> lambda=new Lambda::Expression(new Cons(*funcArgNames,*funcBody),context);
+		Misc::Autopointer<Lambda> lambda=new Lambda(new Cons(*funcArgNames,*funcBody),context);
 		context.setThing(name,*lambda);
 		
 		/* Define the lambda expression's own name to allow recursion: */

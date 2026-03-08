@@ -1,5 +1,6 @@
 /***********************************************************************
-Null - Class representing the empty list, or null thing.
+Begin - Class for a function that evaluates a sequence of arguments and
+returns the result of evaluating its last argument.
 Copyright (c) 2017-2026 Oliver Kreylos
 
 This file is part of the Lambda Programming Language.
@@ -19,25 +20,45 @@ with the Lambda Programming Language; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ***********************************************************************/
 
-#ifndef NULL_INCLUDED
-#define NULL_INCLUDED
+#include "Begin.h"
 
-#include "Thing.h"
+#include <iostream>
+
+#include "Cons.h"
 
 namespace Lambda {
 
-class Null:public Thing
+/**********************
+Methods of class Begin:
+**********************/
+
+std::ostream& Begin::print(std::ostream& os) const
 	{
-	/* Methods from class Thing: */
-	public:
-	static const char* classIsA(void);
-	virtual std::string isA(void) const
+	os<<"(BuiltinBegin expr1 ... exprn) |-> (eval exprn)";
+	
+	return os;
+	}
+
+ThingPtr Begin::evaluate(ThingPtr arguments,Context& context)
+	{
+	/* Check the argument list: */
+	size_t arity=getArity(arguments);
+	
+	/* Evaluate all arguments in order: */
+	ThingPtr result;
+	Thing* argPtr=arguments.getPointer();
+	while(arity>0)
 		{
-		return classIsA();
+		/* Evaluate the argument: */
+		Cons* cons=toKnownPtr<Cons>(*argPtr);
+		result=cons->car().evaluate(context);
+		
+		/* Go to the next argument: */
+		argPtr=&cons->cdr();
+		--arity;
 		}
-	virtual std::ostream& print(std::ostream& os) const;
-	};
+	
+	return result;
+	}
 
 }
-
-#endif

@@ -1,5 +1,6 @@
 /***********************************************************************
-Null - Class representing the empty list, or null thing.
+Begin - Class for a function that evaluates a sequence of arguments and
+returns the result of evaluating its last argument.
 Copyright (c) 2017-2026 Oliver Kreylos
 
 This file is part of the Lambda Programming Language.
@@ -19,23 +20,21 @@ with the Lambda Programming Language; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ***********************************************************************/
 
-#ifndef NULL_INCLUDED
-#define NULL_INCLUDED
+#ifndef BEGIN_INCLUDED
+#define BEGIN_INCLUDED
 
-#include "Thing.h"
+#include "Function.h"
 
 namespace Lambda {
 
-class Null:public Thing
+class Begin:public Function
 	{
 	/* Methods from class Thing: */
 	public:
-	static const char* classIsA(void);
-	virtual std::string isA(void) const
-		{
-		return classIsA();
-		}
-	virtual std::ostream& print(std::ostream& os) const;
+	std::ostream& print(std::ostream& os) const;
+	
+	/* Methods from class Function: */
+	ThingPtr evaluate(ThingPtr arguments,Context& context);
 	};
 
 }

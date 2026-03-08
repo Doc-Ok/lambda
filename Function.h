@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #define FUNCTION_INCLUDED
 
 #include <stddef.h>
+#include <vector>
 
 #include "Thing.h"
 
@@ -42,6 +43,8 @@ class Function:public Thing
 		return to<DestThingParam>(getArg(n,arguments));
 		}
 	static ThingPtr evalArg(size_t n,ThingPtr arguments,Context& context); // Returns the result of evaluating the n-th argument from the given list of arguments, which is already known to be a proper list with at least n elements
+	static std::vector<Thing*> getArgs(ThingPtr arguments); // Returns the list of arguments as a vector; throws exception if the given argument is not a proper list
+	static std::vector<ThingPtr> evalArgs(ThingPtr arguments,Context& context); // Returns the list of results of evaluating the arguments as a vector; throws exception if the given argument is not a proper list
 	
 	/* Methods from class Thing: */
 	public:

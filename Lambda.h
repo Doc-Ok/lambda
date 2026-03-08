@@ -30,43 +30,32 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 namespace Lambda {
 
-class Lambda:public Function
+class Lambda:public Function // Class representing lambda expressions
 	{
-	/* Embedded classes: */
+	/* Elements: */
+	private:
+	Misc::SelfDestructPointer<Context> closure; // The lambda expression's closure evaluation context
+	std::vector<std::string> argumentNames; // The names of the lambda expression's arguments
+	std::vector<ThingPtr> body; // The list of expressions comprising the lambda expression's body
+	std::string name; // The name that was given to this lambda expression by a def or let, or the empty string
+	
+	/* Constructors and destructors: */
 	public:
-	class Expression:public Function // Class representing lambda expressions
-		{
-		/* Elements: */
-		private:
-		Misc::SelfDestructPointer<Context> closure; // The lambda expression's closure evaluation context
-		std::vector<std::string> argumentNames; // The names of the lambda expression's arguments
-		std::vector<ThingPtr> body; // The list of expressions comprising the lambda expression's body
-		std::string name; // The name that was given to this lambda expression by a def or let, or the empty string
-		
-		/* Constructors and destructors: */
-		public:
-		Expression(ThingPtr arguments,Context& sClosure); // Constructs a lambda expression from the given thing, which needs to be a list consisting of a list of argument names followed by one or more body expressions, inside the given context
-		
-		/* Methods from class Thing: */
-		static const char* classIsA(void);
-		std::string isA(void) const
-			{
-			return classIsA();
-			}
-		virtual std::ostream& print(std::ostream& os) const;
-		
-		/* Methods from class Function: */
-		virtual ThingPtr evaluate(ThingPtr arguments,Context& context);
-		
-		/* New methods: */
-		void setName(const std::string& newName); // Gives the lambda expression a name
-		};
+	Lambda(ThingPtr arguments,Context& sClosure); // Constructs a lambda expression from the given thing, which needs to be a list consisting of a list of argument names followed by one or more body expressions, inside the given context
 	
 	/* Methods from class Thing: */
-	virtual std::ostream& print(std::ostream& is) const;
+	static const char* classIsA(void);
+	std::string isA(void) const
+		{
+		return classIsA();
+		}
+	virtual std::ostream& print(std::ostream& os) const;
 	
 	/* Methods from class Function: */
 	virtual ThingPtr evaluate(ThingPtr arguments,Context& context);
+	
+	/* New methods: */
+	void setName(const std::string& newName); // Gives the lambda expression a name
 	};
 
 }

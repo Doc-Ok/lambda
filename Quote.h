@@ -53,12 +53,10 @@ class Quote:public Thing
 		{
 		return *quoted;
 		}
-	static Quote& to(Thing& thing); // Casts the given thing to a Quote; throws exception if the thing is not a Quote
 	static Thing& getQuoted(Thing& thing) // Returns the quoted thing of the given thing if it is a Quote; throws exception otherwise
 		{
 		/* Try casting the given thing to a Quote and return that Quote's quoted thing: */
-		return *dynamic_cast<Quote*>(&thing)->quoted;
-		// return *to<Quote>(thing).quoted; // WTF isn't this compiling???
+		return *to<Quote>(thing).quoted;
 		}
 	};
 

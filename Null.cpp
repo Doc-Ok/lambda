@@ -23,8 +23,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include <iostream>
 
-#include "Boolean.h"
-
 namespace Lambda {
 
 /*********************
@@ -42,26 +40,6 @@ std::ostream& Null::print(std::ostream& os) const
 	os<<"()";
 	
 	return os;
-	}
-
-/**********************
-Methods of class NullP:
-**********************/
-
-std::ostream& NullP::print(std::ostream& os) const
-	{
-	os<<"(BuiltinNull? thing) |-> Boolean";
-	
-	return os;
-	}
-
-ThingPtr NullP::evaluate(ThingPtr arguments,Context& context)
-	{
-	/* Check the argument list: */
-	checkArity(1,arguments);
-	
-	/* Return a new Boolean with true if the argument evaluates to a Null: */
-	return new Boolean(is<Null>(*evalArg(0,arguments,context)));
 	}
 
 }

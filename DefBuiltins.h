@@ -1,5 +1,6 @@
 /***********************************************************************
-Null - Class representing the empty list, or null thing.
+DefBuiltIns - Function to define the built-in functions in an evaluation
+context.
 Copyright (c) 2017-2026 Oliver Kreylos
 
 This file is part of the Lambda Programming Language.
@@ -19,24 +20,17 @@ with the Lambda Programming Language; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ***********************************************************************/
 
-#ifndef NULL_INCLUDED
-#define NULL_INCLUDED
+#ifndef DEFBUILTINS_INCLUDED
+#define DEFBUILTINS_INCLUDED
 
-#include "Thing.h"
+/* Forward declarations: */
+namespace Lambda {
+class Context;
+}
 
 namespace Lambda {
 
-class Null:public Thing
-	{
-	/* Methods from class Thing: */
-	public:
-	static const char* classIsA(void);
-	virtual std::string isA(void) const
-		{
-		return classIsA();
-		}
-	virtual std::ostream& print(std::ostream& os) const;
-	};
+void defBuiltins(Context& context); // Defines the Lambda Programming Language's built-in functions in the given evaluation context
 
 }
 

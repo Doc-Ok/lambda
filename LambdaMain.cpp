@@ -19,41 +19,20 @@ with the Lambda Programming Language; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ***********************************************************************/
 
-#include <ctype.h>
-#include <string>
 #include <stdexcept>
 #include <iostream>
-#include <Misc/StdError.h>
 
 #include "Context.h"
-#include "Null.h"
-#include "Boolean.h"
-#include "Cons.h"
-#include "If.h"
-#include "Def.h"
-#include "Lambda.h"
-#include "Boolean.h"
+#include "DefBuiltins.h"
 #include "Parser.h"
-#include "Load.h"
 
-int main(int argc,char* argv[])
+int main(void)
 	{
 	/* Create an evaluation context: */
 	Lambda::Context context;
-	context.setThing("null",*new Lambda::Null);
-	context.setThing("null?",*new Lambda::NullP);
-	context.setThing("#f",*new Lambda::Boolean(false));
-	context.setThing("#t",*new Lambda::Boolean(true));
-	context.setThing("cons",*new Lambda::MakeCons);
-	context.setThing("car",*new Lambda::Car);
-	context.setThing("cdr",*new Lambda::Cdr);
-	context.setThing("if",*new Lambda::If);
-	context.setThing("def",*new Lambda::Def);
-	context.setThing("lambda",*new Lambda::Lambda);
-	context.setThing("not",*new Lambda::Not);
-	context.setThing("and",*new Lambda::And);
-	context.setThing("or",*new Lambda::Or);
-	context.setThing("load",*new Lambda::Load);
+	
+	/* Define the Lambda Programming Language's built-in primitives and functions: */
+	defBuiltins(context);
 	
 	/* Read, evaluate, and print expressions until the user closes the connection: */
 	std::cout<<"Welcome to the Lambda Programming Language!"<<std::endl;
@@ -73,7 +52,7 @@ int main(int argc,char* argv[])
 			/* Evaluate the expression: */
 			Lambda::ThingPtr result=expression->evaluate(context);
 			
-			/* Print the result if it is not empty, otherwise just confirm that an expression has been parsed: */
+			/* Print the result if it is not empty: */
 			if(result!=0)
 				{
 				std::cout<<"= ";
