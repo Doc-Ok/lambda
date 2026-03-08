@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #ifndef NAME_INCLUDED
 #define NAME_INCLUDED
 
+#include "String.h"
 #include "Thing.h"
 
 namespace Lambda {
@@ -30,7 +31,7 @@ class Name:public Thing
 	{
 	/* Elements: */
 	private:
-	std::string name; // This thing's name
+	String name; // This thing's name
 	
 	/* Constructors and destructors: */
 	public:
@@ -53,11 +54,11 @@ class Name:public Thing
 	virtual std::ostream& print(std::ostream& os) const;
 	
 	/* New methods: */
-	const std::string& getName(void) const // Returns this thing's name
+	const String& getName(void) const // Returns this thing's name
 		{
 		return name;
 		}
-	static const std::string& getName(const Thing& thing) // Returns the given thing's name if it is a Name; throws exception otherwise
+	static const String& getName(const Thing& thing) // Returns the given thing's name if it is a Name; throws exception otherwise
 		{
 		/* Try casting the given thing to a Name and return that Name's name: */
 		return to<Name>(thing).name;

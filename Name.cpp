@@ -45,7 +45,7 @@ ThingPtr Name::evaluate(Context& context)
 std::ostream& Name::print(std::ostream& os) const
 	{
 	/* Print this thing's name: */
-	os<<name;
+	os<<name.c_str();
 	
 	return os;
 	}

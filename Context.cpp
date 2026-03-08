@@ -56,7 +56,7 @@ size_t Context::openFrame(void)
 	return stack.size();
 	}
 
-void Context::setThing(const std::string& name,Thing& thing)
+void Context::setThing(const String& name,Thing& thing)
 	{
 	/* Check if the name is already in the map: */
 	ThingMap::Iterator tmIt=thingMap.findEntry(name);
@@ -80,7 +80,7 @@ void Context::setThing(const std::string& name,Thing& thing)
 		}
 	}
 
-void Context::removeThing(const std::string& name)
+void Context::removeThing(const String& name)
 	{
 	/* Check if the name is actually in the map: */
 	ThingMap::Iterator tmIt=thingMap.findEntry(name);
@@ -117,7 +117,7 @@ void Context::closeFrame(size_t frameBase)
 	--numOpenFrames;
 	}
 
-Thing& Context::getThing(const std::string& name)
+Thing& Context::getThing(const String& name)
 	{
 	/* Find the name in the map and return the associated thing: */
 	ThingMap::Iterator tmIt=thingMap.findEntry(name);

@@ -77,7 +77,7 @@ ThingPtr Def::evaluate(ThingPtr arguments,Context& context)
 			throw IsNotAError(*arguments,"a valid function declaration");
 		
 		/* Get the function name: */
-		const std::string& name=Name::getName(cons->car());
+		const String& name=Name::getName(cons->car());
 		
 		/* Get the function argument name list: */
 		Thing* funcArgNames=&cons->cdr();

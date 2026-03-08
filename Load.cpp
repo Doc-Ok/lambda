@@ -47,7 +47,7 @@ ThingPtr Load::evaluate(ThingPtr arguments,Context& context)
 	checkArity(1,arguments);
 	
 	/* Get the first argument: */
-	std::string fileName=Name::getName(getArg(0,arguments));
+	std::string fileName(Name::getName(getArg(0,arguments)).c_str());
 	
 	/* Check if the file name has an extension: */
 	std::string::iterator extIt=fileName.end();

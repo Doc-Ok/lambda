@@ -26,8 +26,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <stddef.h>
 #include <vector>
 #include <Misc/HashTable.h>
-#include <Misc/StringHashFunctions.h>
 
+#include "String.h"
 #include "Thing.h"
 
 namespace Lambda {
@@ -36,21 +36,21 @@ class Context
 	{
 	/* Embedded classes: */
 	private:
-	typedef Misc::HashTable<std::string,ThingPtr> ThingMap; // Hash table mapping names to things
+	typedef Misc::HashTable<String,ThingPtr,String> ThingMap; // Hash table mapping names to things
 	
 	struct Mapping // Structure representing a previous mapping in a thing map, i.e., an undo buffer for defining mappings
 		{
 		/* Elements: */
 		public:
-		std::string name; // The mapped name
+		String name; // The mapped name
 		ThingPtr thing; // The thing to which the name is mapped, or null if the name does not map to anything
 		
 		/* Constructors and destructors: */
-		Mapping(const std::string& sName,Thing& sThing) // Elementwise constructor
+		Mapping(const String& sName,Thing& sThing) // Elementwise constructor
 			:name(sName),thing(&sThing)
 			{
 			}
-		Mapping(const std::string& sName) // Ditto, for a name that does not map to anything
+		Mapping(const String& sName) // Ditto, for a name that does not map to anything
 			:name(sName)
 			{
 			}
@@ -96,9 +96,9 @@ class Context
 	
 	/* Methods: */
 	Context* clone(void) const; // Clones the current state of this context to create a closure
-	void setThing(const std::string& name,Thing& thing); // Maps the given name to the given thing inside the current stack frame; replaces any previous mapping
-	void removeThing(const std::string& name); // Removes the thing that was mapped to the given name inside the current stack frame
-	Thing& getThing(const std::string& name); // Returns the thing mapped to the given name; throws exception if the name has no mapping
+	void setThing(const String& name,Thing& thing); // Maps the given name to the given thing inside the current stack frame; replaces any previous mapping
+	void removeThing(const String& name); // Removes the thing that was mapped to the given name inside the current stack frame
+	Thing& getThing(const String& name); // Returns the thing mapped to the given name; throws exception if the name has no mapping
 	};
 
 }

@@ -105,7 +105,9 @@ ThingPtr parse(InputStream& is)
 	else if(is.token())
 		{
 		/* Parse a name, or maybe an integer or a floating-point: */
-		std::string name;
+		static char nameBuf[128];
+		char* namePtr=nameBuf;
+		char* nameEnd=nameBuf+sizeof(nameBuf)-2;
 		bool first=true;
 		bool maybeInteger=true;
 		bool maybeFloatingPoint=true;
@@ -125,9 +127,10 @@ ThingPtr parse(InputStream& is)
 		/* Handle the token's characters: */
 		do
 			{
-			/* Get the next character and append it to the name: */
+			/* Get the next character and append it to the name if there is room: */
 			int next=is.get();
-			name.push_back(next);
+			if(namePtr!=nameEnd)
+				*(namePtr++)=char(next);
 			
 			/* Accumulate a potential integer: */
 			if(maybeInteger)
@@ -232,7 +235,10 @@ ThingPtr parse(InputStream& is)
 			result=new FloatingPoint(floatingPoint);
 			}
 		else
-			result=new Name(name);
+			{
+			*namePtr='\0';
+			result=new Name(nameBuf);
+			}
 		}
 	else if(!is.eof())
 		throw makeError("Unexpected '%c' while parsing",is.get());

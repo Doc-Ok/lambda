@@ -60,6 +60,12 @@ include $(VRUI_MAKEDIR)/Configuration.Vrui
 # (Supported packages can be found in $(VRUI_MAKEDIR)/Packages.*)
 ########################################################################
 
+READLINE_BASEDIR = /usr
+READLINE_DEPENDS = 
+READLINE_INCLUDE = -I$(READLINE_BASEDIR)/$(INCLUDEEXT)
+READLINE_LIBDIR  = -L$(READLINE_BASEDIR)/$(LIBEXT)
+READLINE_LIBS    = -lreadline
+
 PACKAGES = MYTHREADS MYMISC
 
 ########################################################################

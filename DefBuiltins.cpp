@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "DefBuiltins.h"
 
+#include <math.h>
 #include <iostream>
 
 #include "Context.h"
@@ -53,7 +54,7 @@ class NullP:public Function // Predicate function returning true if the argument
 	public:
 	virtual std::ostream& print(std::ostream& os) const
 		{
-		os<<"(Builtin::Null? expr): '() |-> #t, expr |-> #f";
+		os<<"(Builtin::NullP expr): '() |-> #t, expr |-> #f";
 		
 		return os;
 		}
@@ -72,6 +73,28 @@ class NullP:public Function // Predicate function returning true if the argument
 /*******************
 Functions with Cons:
 *******************/
+
+class ConsP:public Function // Predicate function returning true if the argument is a Cons
+	{
+	/* Methods from class Thing: */
+	public:
+	virtual std::ostream& print(std::ostream& os) const
+		{
+		os<<"(Builtin::ConsP expr): (a . b) |-> #t, expr |-> #f";
+		
+		return os;
+		}
+	
+	/* Methods from class Function: */
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context)
+		{
+		/* Check the argument list: */
+		checkArity(1,arguments);
+		
+		/* Return a new Boolean with true if the first argument evaluates to a Null, false otherwise: */
+		return new Boolean(is<Cons>(*evalArg(0,arguments,context)));
+		}
+	};
 
 class Cons:public Function // Class to make a Cons from a car and a cdr
 	{
@@ -169,6 +192,28 @@ class Quote:public Function // Class to make a Quote from an expression
 Functions with Boolean:
 **********************/
 
+class BooleanP:public Function // Predicate function returning true if the argument is a Boolean
+	{
+	/* Methods from class Thing: */
+	public:
+	virtual std::ostream& print(std::ostream& os) const
+		{
+		os<<"(Builtin::BooleanP expr): #t |-> #t, #f |-> #t, expr |-> #f";
+		
+		return os;
+		}
+	
+	/* Methods from class Function: */
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context)
+		{
+		/* Check the argument list: */
+		checkArity(1,arguments);
+		
+		/* Return a new Boolean with true if the first argument evaluates to a Boolean, false otherwise: */
+		return new Boolean(is<Boolean>(*evalArg(0,arguments,context)));
+		}
+	};
+
 class Not:public Function // Logical not
 	{
 	/* Methods from class Thing: */
@@ -262,6 +307,74 @@ class Lambda:public Function // Class to make a Lambda from an argument list
 Functions with Integer and/or FloatingPoint:
 *******************************************/
 
+/********************************************************
+Use a macro to create the numerical comparison functions:
+********************************************************/
+
+#define COMPFUNC(NAME,OPERATOR) \
+class NAME:public Function \
+	{ \
+	/* Methods from class Thing: */ \
+	public: \
+	virtual std::ostream& print(std::ostream& os) const \
+		{ \
+		os<<"(Builtin::"<<#NAME<<" expr1 expr2) |-> expr1"<<#OPERATOR<<"expr2"; \
+		 \
+		return os; \
+		} \
+	 \
+	/* Methods from class Function: */ \
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context) \
+		{ \
+		/* Check the argument list: */ \
+		checkArity(2,arguments); \
+		 \
+		/* Evaluate both arguments: */ \
+		ThingPtr value0=evalArg(0,arguments,context); \
+		ThingPtr value1=evalArg(1,arguments,context); \
+		 \
+		/* Check if both values are integer or floating-points: */ \
+		Integer* i0=toPtr<Integer>(*value0); \
+		Integer* i1=toPtr<Integer>(*value1); \
+		FloatingPoint* f0=toPtr<FloatingPoint>(*value0); \
+		FloatingPoint* f1=toPtr<FloatingPoint>(*value1); \
+		if(i0!=0) \
+			{ \
+			if(i1!=0) \
+				return new Boolean(i0->getValue() OPERATOR i1->getValue()); \
+			else if(f1!=0) \
+				return new Boolean(double(i0->getValue()) OPERATOR f1->getValue()); \
+			else \
+				throw IsNotAError(*value1,"an Integer"); \
+			} \
+		else if(f0!=0) \
+			{ \
+			if(i1!=0) \
+				return new Boolean(f0->getValue() OPERATOR double(i1->getValue())); \
+			else if(f1!=0) \
+				return new Boolean(f0->getValue() OPERATOR f1->getValue()); \
+			else \
+				throw IsNotAError(*value1,"a FloatingPoint"); \
+			} \
+		else \
+			{ \
+			if(i1!=0) \
+				throw IsNotAError(*value0,"an Integer"); \
+			else if(f1!=0) \
+				throw IsNotAError(*value0,"a FloatingPoint"); \
+			else \
+				throw IsNotAError(*value0,"a Number"); \
+			} \
+		} \
+	}
+
+COMPFUNC(Equal,==);
+COMPFUNC(Unequal,!=);
+COMPFUNC(LessThan,<);
+COMPFUNC(LessEqual,<=);
+COMPFUNC(GreaterEqual,>=);
+COMPFUNC(Greater,>);
+
 class Add:public Function // Class to add any number of Integers and/or FloatingPoints
 	{
 	/* Methods from class Thing: */
@@ -334,7 +447,7 @@ class Sub:public Function // Class to subtract any number of Integers and/or Flo
 			else
 				return new FloatingPoint(-FloatingPoint::getValue(*values.front()));
 			}
-		else
+		else if(values.size()>1)
 			{
 			/* Subtract all following arguments from the first argument: */
 			std::vector<ThingPtr>::iterator vIt=values.begin();
@@ -375,6 +488,8 @@ class Sub:public Function // Class to subtract any number of Integers and/or Flo
 			else
 				return new FloatingPoint(floatingPoint);
 			}
+		else
+			throw Error("Not enough function arguments");
 		}
 	};
 
@@ -463,7 +578,7 @@ class Div:public Function // Class to divide any number of Integers and/or Float
 					return new FloatingPoint(1.0/value);
 				}
 			}
-		else
+		else if(values.size()>1)
 			{
 			/* Divide the first argument by all subsequent arguments: */
 			std::vector<ThingPtr>::iterator vIt=values.begin();
@@ -518,6 +633,201 @@ class Div:public Function // Class to divide any number of Integers and/or Float
 			else
 				return new FloatingPoint(floatingPoint);
 			}
+		else
+			throw Error("Not enough function arguments");
+		}
+	};
+
+class Mod:public Function // Class to calculate the modulus of two Integers or FloatingPoints
+	{
+	/* Methods from class Thing: */
+	public:
+	virtual std::ostream& print(std::ostream& os) const
+		{
+		os<<"(Builtin::Mod expr1 expr2) |-> expr1%expr2";
+		
+		return os;
+		}
+	
+	/* Methods from class Function: */ \
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context)
+		{
+		/* Check the argument list: */
+		checkArity(2,arguments);
+		
+		/* Evaluate the first two arguments: */
+		ThingPtr value0=evalArg(0,arguments,context);
+		ThingPtr value1=evalArg(1,arguments,context);
+		
+		/* Check if both values are integer or floating-points: */
+		Integer* i0=toPtr<Integer>(*value0);
+		Integer* i1=toPtr<Integer>(*value1);
+		FloatingPoint* f0=toPtr<FloatingPoint>(*value0);
+		FloatingPoint* f1=toPtr<FloatingPoint>(*value1);
+		if((i1!=0&&i1->getValue()==0)||(f1!=0&&f1->getValue()==0.0))
+			throw Error("Division by zero");
+		if(i0!=0)
+			{
+			if(i1!=0)
+				return new Integer(i0->getValue()%i1->getValue());
+			else if(f1!=0)
+				return new FloatingPoint(fmod(double(i0->getValue()),f1->getValue()));
+			else
+				throw IsNotAError(*value1,"an Integer");
+			}
+		else if(f0!=0)
+			{
+			if(i1!=0)
+				return new FloatingPoint(fmod(f0->getValue(),double(i1->getValue())));
+			else if(f1!=0)
+				return new FloatingPoint(fmod(f0->getValue(),f1->getValue()));
+			else
+				throw IsNotAError(*value1,"a FloatingPoint");
+			}
+		else
+			{
+			if(i1!=0)
+				throw IsNotAError(*value0,"an Integer");
+			else if(f1!=0)
+				throw IsNotAError(*value0,"a FloatingPoint");
+			else
+				throw IsNotAError(*value0,"a Number");
+			}
+		}
+	};
+
+class Abs:public Function // Class to get the absolute value
+	{
+	/* Methods from class Thing: */
+	public:
+	virtual std::ostream& print(std::ostream& os) const
+		{
+		os<<"(Builtin::Abs expr) |-> abs(expr)";
+		
+		return os;
+		}
+	
+	/* Methods from class Function: */ \
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context)
+		{
+		/* Check the argument list: */
+		checkArity(1,arguments);
+		
+		/* Evaluate the first argument: */
+		ThingPtr value=evalArg(0,arguments,context);
+		
+		/* Check if the value is an Integer: */
+		Integer* i=toPtr<Integer>(*value);
+		if(i!=0)
+			{
+			/* Return a new Integer with the absolute value: */
+			return new Integer(labs(i->getValue()));
+			}
+		else
+			{
+			/* Check if the value is a FloatingPoint: */
+			FloatingPoint* f=toPtr<FloatingPoint>(*value);
+			if(f!=0)
+				{
+				/* Return a new FloatingPoint with the absolute value: */
+				return new FloatingPoint(fabs(f->getValue()));
+				}
+			else
+				throw IsNotAError(*value,"a Number");
+			}
+		}
+	};
+
+/********************************************************
+Use a macro to create the unary floating-point functions:
+********************************************************/
+
+#define UNARYFLOATFUNC(NAME,FUNCTION) \
+class NAME:public Function \
+	{ \
+	/* Methods from class Thing: */ \
+	public: \
+	virtual std::ostream& print(std::ostream& os) const \
+		{ \
+		os<<"(Builtin::"<<#NAME<<" expr) |-> "<<#FUNCTION<<"(expr)"; \
+		 \
+		return os; \
+		} \
+	 \
+	/* Methods from class Function: */ \
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context) \
+		{ \
+		/* Check the argument list: */ \
+		checkArity(1,arguments); \
+		 \
+		/* Convert the result of evaluating the first argument to a FloatingPoint and then evaluate the FUNCTION function: */ \
+		return new FloatingPoint(FUNCTION(FloatingPoint::convertValue(*evalArg(0,arguments,context)))); \
+		} \
+	}
+
+UNARYFLOATFUNC(Floor,floor);
+UNARYFLOATFUNC(Ceil,ceil);
+UNARYFLOATFUNC(Sqrt,sqrt);
+UNARYFLOATFUNC(Exp,exp);
+UNARYFLOATFUNC(Log,log);
+UNARYFLOATFUNC(Exp10,exp10);
+UNARYFLOATFUNC(Log10,log10);
+UNARYFLOATFUNC(Sin,sin);
+UNARYFLOATFUNC(Cos,cos);
+UNARYFLOATFUNC(Tan,tan);
+UNARYFLOATFUNC(Asin,asin);
+UNARYFLOATFUNC(Acos,acos);
+UNARYFLOATFUNC(Atan,atan);
+
+class Pow:public Function // Class to raise one value to the power of another
+	{
+	/* Methods from class Thing: */
+	public:
+	virtual std::ostream& print(std::ostream& os) const
+		{
+		os<<"(Builtin::Pow expr1 expr2) |-> expr1**expr2";
+		
+		return os;
+		}
+	
+	/* Methods from class Function: */ \
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context)
+		{
+		/* Check the argument list: */
+		checkArity(2,arguments);
+		
+		/* Convert the results of evaluating the first two arguments to floating-point: */
+		double value0=FloatingPoint::convertValue(*evalArg(0,arguments,context));
+		double value1=FloatingPoint::convertValue(*evalArg(1,arguments,context));
+		
+		/* Return the result of raising the first value to the power of the second: */
+		return new FloatingPoint(pow(value0,value1));
+		}
+	};
+
+class Atan2:public Function // Class to calculate the full-circle arctangent
+	{
+	/* Methods from class Thing: */
+	public:
+	virtual std::ostream& print(std::ostream& os) const
+		{
+		os<<"(Builtin::Atan2 expr1 expr2) |-> atan2(expr1,expr2)";
+		
+		return os;
+		}
+	
+	/* Methods from class Function: */ \
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context)
+		{
+		/* Check the argument list: */
+		checkArity(2,arguments);
+		
+		/* Convert the results of evaluating the first two arguments to floating-point: */
+		double value0=FloatingPoint::convertValue(*evalArg(0,arguments,context));
+		double value1=FloatingPoint::convertValue(*evalArg(1,arguments,context));
+		
+		/* Return the result of the atan2 function: */
+		return new FloatingPoint(atan2(value0,value1));
 		}
 	};
 
@@ -527,6 +837,7 @@ void defBuiltins(Context& context)
 	{
 	context.setThing("null?",*new Builtin::NullP);
 	
+	context.setThing("cons?",*new Builtin::ConsP);
 	context.setThing("cons",*new Builtin::Cons);
 	context.setThing("car",*new Builtin::Car);
 	context.setThing("cdr",*new Builtin::Cdr);
@@ -535,6 +846,7 @@ void defBuiltins(Context& context)
 	context.setThing("eval",*new Eval);
 	context.setThing("begin",*new Begin);
 	
+	context.setThing("boolean?",*new Builtin::BooleanP);
 	context.setThing("#f",*new Boolean(false));
 	context.setThing("#t",*new Boolean(true));
 	context.setThing("not",*new Builtin::Not);
@@ -547,10 +859,39 @@ void defBuiltins(Context& context)
 	
 	context.setThing("lambda",*new Builtin::Lambda);
 	
+	context.setThing("=",*new Builtin::Equal);
+	context.setThing("!=",*new Builtin::Unequal);
+	context.setThing("<",*new Builtin::LessThan);
+	context.setThing("<=",*new Builtin::LessEqual);
+	context.setThing(">=",*new Builtin::GreaterEqual);
+	context.setThing(">",*new Builtin::Greater);
+	
 	context.setThing("+",*new Builtin::Add);
 	context.setThing("-",*new Builtin::Sub);
 	context.setThing("*",*new Builtin::Mult);
 	context.setThing("/",*new Builtin::Div);
+	context.setThing("%",*new Builtin::Mod);
+	
+	context.setThing("pi",*new FloatingPoint(M_PI));
+	context.setThing("e",*new FloatingPoint(M_E));
+	
+	context.setThing("abs",*new Builtin::Abs);
+	context.setThing("floor",*new Builtin::Floor);
+	context.setThing("ceil",*new Builtin::Ceil);
+	context.setThing("sqrt",*new Builtin::Sqrt);
+	context.setThing("exp",*new Builtin::Exp);
+	context.setThing("log",*new Builtin::Log);
+	context.setThing("exp10",*new Builtin::Exp10);
+	context.setThing("log10",*new Builtin::Log10);
+	context.setThing("sin",*new Builtin::Sin);
+	context.setThing("cos",*new Builtin::Cos);
+	context.setThing("tan",*new Builtin::Tan);
+	context.setThing("asin",*new Builtin::Asin);
+	context.setThing("acos",*new Builtin::Acos);
+	context.setThing("atan",*new Builtin::Atan);
+	
+	context.setThing("pow",*new Builtin::Pow);
+	context.setThing("atan2",*new Builtin::Atan2);
 	}
 
 }

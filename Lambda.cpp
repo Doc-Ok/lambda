@@ -76,14 +76,14 @@ const char* Lambda::classIsA(void)
 std::ostream& Lambda::print(std::ostream& os) const
 	{
 	/* Print the name of a named lambda or just lambda for an unnamed one: */
-	if(name.empty())
-		os<<"(lambda";
+	if(name.valid())
+		os<<'('<<name.c_str();
 	else
-		os<<'('<<name;
+		os<<"(lambda";
 	
 	/* Print the list of argument names: */
-	for(std::vector<std::string>::const_iterator aIt=argumentNames.begin();aIt!=argumentNames.end();++aIt)
-		os<<' '<<*aIt;
+	for(std::vector<String>::const_iterator aIt=argumentNames.begin();aIt!=argumentNames.end();++aIt)
+		os<<' '<<aIt->c_str();
 	os<<") |->";
 	
 	/* Print the list of body expressions: */
@@ -113,7 +113,7 @@ ThingPtr Lambda::evaluate(ThingPtr arguments,Context& context)
 		closure->setThing(argumentNames[i],*argValues[i]);
 	
 	/* If we have a name, we need to define it in the stack frame for recursion to work: */
-	if(!name.empty())
+	if(name.valid())
 		closure->setThing(name,*this);
 	
 	/* Evaluate the body expressions: */
@@ -125,10 +125,10 @@ ThingPtr Lambda::evaluate(ThingPtr arguments,Context& context)
 	return result;
 	}
 
-void Lambda::setName(const std::string& newName)
+void Lambda::setName(const String& newName)
 	{
 	/* Only take the given name if no name has been assigned yet: */
-	if(name.empty())
+	if(!name.valid())
 		name=newName;
 	}
 

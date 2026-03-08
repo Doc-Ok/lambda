@@ -22,12 +22,24 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <stdexcept>
 #include <iostream>
 
+#include "String.h"
 #include "Context.h"
 #include "DefBuiltins.h"
 #include "Parser.h"
 
+std::ostream& operator<<(std::ostream& os,const Lambda::Thing& thing)
+	{
+	return thing.print(os);
+	}
+
 int main(void)
 	{
+	/* Futz around with strings: */
+	Lambda::String s1("Hello");
+	Lambda::String s2(s1);
+	s1="World";
+	s2=0;
+	
 	/* Create an evaluation context: */
 	Lambda::Context context;
 	
@@ -54,11 +66,7 @@ int main(void)
 			
 			/* Print the result if it is not empty: */
 			if(result!=0)
-				{
-				std::cout<<"= ";
-				result->print(std::cout);
-				std::cout<<std::endl;
-				}
+				std::cout<<"= "<<*result<<std::endl;
 			}
 		catch(const std::runtime_error& err)
 			{

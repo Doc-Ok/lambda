@@ -22,10 +22,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #ifndef LAMBDA_INCLUDED
 #define LAMBDA_INCLUDED
 
-#include <string>
 #include <vector>
 #include <Misc/SelfDestructPointer.h>
 
+#include "String.h"
 #include "Function.h"
 
 namespace Lambda {
@@ -35,9 +35,9 @@ class Lambda:public Function // Class representing lambda expressions
 	/* Elements: */
 	private:
 	Misc::SelfDestructPointer<Context> closure; // The lambda expression's closure evaluation context
-	std::vector<std::string> argumentNames; // The names of the lambda expression's arguments
+	std::vector<String> argumentNames; // The names of the lambda expression's arguments
 	std::vector<ThingPtr> body; // The list of expressions comprising the lambda expression's body
-	std::string name; // The name that was given to this lambda expression by a def or let, or the empty string
+	String name; // The name that was given to this lambda expression by a def or let, or the null string
 	
 	/* Constructors and destructors: */
 	public:
@@ -55,7 +55,7 @@ class Lambda:public Function // Class representing lambda expressions
 	virtual ThingPtr evaluate(ThingPtr arguments,Context& context);
 	
 	/* New methods: */
-	void setName(const std::string& newName); // Gives the lambda expression a name
+	void setName(const String& newName); // Gives the lambda expression a name
 	};
 
 }
