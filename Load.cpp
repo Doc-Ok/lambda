@@ -22,10 +22,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "Load.h"
 
+#include <unistd.h>
+#include <fcntl.h>
 #include <iostream>
-#include <fstream>
 
 #include "Name.h"
+#include "InputStream.h"
 #include "Parser.h"
 
 namespace Lambda {
@@ -64,9 +66,8 @@ ThingPtr Load::evaluate(ThingPtr arguments,Context& context)
 		fileName.append(".lambda");
 		}
 	
-	/* Open the input file and wrap in InputStream around it: */
-	std::ifstream file(fileName.c_str());
-	InputStream inputStream(file);
+	/* Create an InputStream to read the file: */
+	InputStream inputStream(fileName.c_str());
 	
 	/* Parse the input stream until end-of-file: */
 	while(true)

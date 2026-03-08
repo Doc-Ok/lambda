@@ -66,7 +66,7 @@ READLINE_INCLUDE = -I$(READLINE_BASEDIR)/$(INCLUDEEXT)
 READLINE_LIBDIR  = -L$(READLINE_BASEDIR)/$(LIBEXT)
 READLINE_LIBS    = -lreadline
 
-PACKAGES = MYTHREADS MYMISC
+PACKAGES = MYTHREADS MYMISC READLINE
 
 ########################################################################
 # Specify all final targets

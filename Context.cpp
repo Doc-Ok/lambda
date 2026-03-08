@@ -49,6 +49,30 @@ Context* Context::clone(void) const
 	return result;
 	}
 
+std::vector<String>* Context::getMatchingNames(const char* begin,const char* end) const
+	{
+	/* Collect a list of matching names: */
+	std::vector<String>* result=new std::vector<String>;
+	
+	/* Iterate over all mappings: */
+	size_t length=end-begin;
+	for(ThingMap::ConstIterator tmIt=thingMap.begin();!tmIt.isFinished();++tmIt)
+		{
+		/* Check if the defined name is at least as long as the matching prefix: */
+		if(tmIt->getSource().length()>=length)
+			{
+			/* Check if the matching prefix completely matches the defined name: */
+			if(memcmp(tmIt->getSource().c_str(),begin,length)==0)
+				{
+				/* Add the defined name to the match list: */
+				result->push_back(tmIt->getSource());
+				}
+			}
+		}
+	
+	return result;
+	}
+
 size_t Context::openFrame(void)
 	{
 	/* Increment the stack frame counter and return the number of mappings in the stack: */

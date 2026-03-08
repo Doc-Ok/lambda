@@ -96,6 +96,7 @@ class Context
 	
 	/* Methods: */
 	Context* clone(void) const; // Clones the current state of this context to create a closure
+	std::vector<String>* getMatchingNames(const char* begin,const char* end) const; // Returns the list of defined names whose prefix matches the given character sequence
 	void setThing(const String& name,Thing& thing); // Maps the given name to the given thing inside the current stack frame; replaces any previous mapping
 	void removeThing(const String& name); // Removes the thing that was mapped to the given name inside the current stack frame
 	Thing& getThing(const String& name); // Returns the thing mapped to the given name; throws exception if the name has no mapping
