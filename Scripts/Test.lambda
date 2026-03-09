@@ -1,0 +1,123 @@
+(def (length list)
+	(if (null? list)
+		0
+		(+ 1 (length (cdr list)))
+	)
+)
+
+(def (nth n list)
+	(if (= n 0)
+		(car list)
+		(nth (- n 1) (cdr list))
+	)
+)
+
+(def (tail list)
+	(if (null? (cdr list))
+		(car list)
+		(tail (cdr list))
+	)
+)
+
+(def (append list elem)
+	(if (null? list)
+		(cons elem '())
+		(cons (car list) (append (cdr list) elem))
+	)
+)
+
+(def (concat list1 list2)
+	(if (null? list1)
+		list2
+		(cons (car list1) (concat (cdr list1) list2))
+	)
+)
+
+(def (count from step to)
+	(if (> from to)
+		'()
+		(cons from (count (+ from step) step to))
+	)
+)
+
+(def (reverse-with accum list)
+	(if (null? list)
+		accum
+		(reverse-with (cons (car list) accum) (cdr list))
+	)
+)
+
+(def (reverse list)
+	(reverse-with '() list)
+)
+
+(def (apply f list)
+	(if (null? list)
+		'()
+		(cons (f (car list)) (apply f (cdr list)))
+	)
+)
+
+(def (zipright binop list)
+	(if (null? (cdr (cdr list)))
+		(binop (car list) (car (cdr list)))
+		(binop (car list) (zipright binop (cdr list)))
+	)
+)
+
+(def (zipright-with binop seed list)
+	(if (null? list)
+		seed
+		(binop (car list) (zipright-with binop seed (cdr list)))
+	)
+)
+
+(def (zipleft-with binop seed list)
+	(if (null? list)
+		seed
+		(zipleft-with binop (binop seed (car list)) (cdr list))
+	)
+)
+
+(def (zipleft binop list)
+	(zipleft-with binop (car list) (cdr list))
+)
+
+(def (filter p list)
+	(if (null? list)
+		'()
+		(if (p (car list))
+			(cons (car list) (filter p (cdr list)))
+			(filter p (cdr list))
+		)
+	)
+)
+
+(def (notmultof a)
+	(lambda (b) (/= (% b a) 0))
+)
+
+(def (sthenes list)
+	(filter (notmultof (car list)) (cdr list))
+)
+
+(def (erato list)
+	(if (null? list)
+		'()
+		(cons (car list) (erato (sthenes list)))
+	)
+)
+
+(def primes (erato (count 2 1 200)))
+
+(def (comp f g)
+	(lambda (a) (f (g a)))
+)
+
+(def cadr (comp car cdr))
+
+(def caddr (comp (comp car cdr) cdr))
+
+(def (bind2->1 f arg0) (lambda (a) (f arg0 a)))
+
+(def (bind1->0 f arg0) (lambda () (f arg0)))
