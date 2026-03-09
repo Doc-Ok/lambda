@@ -22,11 +22,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #ifndef NULL_INCLUDED
 #define NULL_INCLUDED
 
-#include "Thing.h"
+#include "Atom.h"
 
 namespace Lambda {
 
-class Null:public Thing
+class Null:public Atom
 	{
 	/* Methods from class Thing: */
 	public:

@@ -15,7 +15,8 @@ Requirements
 
 The Lambda Programming Language requires the Vrui VR development
 toolkit, version 15.0-001 or later, and therefore runs on UNIX-like
-operating systems.
+operating systems. It also requires the GNU readline library.
+
 Technically speaking, the Lambda Programming Language only requires
 the Misc and Threads sub-libraries of the Vrui VR development toolkit,
 but who's keeping track.

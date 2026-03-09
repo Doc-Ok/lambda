@@ -39,7 +39,7 @@ namespace Lambda {
 /* Forward declaration: */
 class Thing;
 
-typedef Misc::Autopointer<Thing> ThingPtr; // Class for pointers to Thing objects
+typedef Misc::Autopointer<Thing> ThingPtr; // Type for pointers to Thing objects
 
 class Thing:public Threads::RefCounted
 	{

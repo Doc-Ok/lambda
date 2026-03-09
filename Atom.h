@@ -1,5 +1,6 @@
 /***********************************************************************
-Integer - Class representing integer values.
+Atom - Intermediate base class for things that are indivisible, unlike a
+Cons cell. So basically an atom is anything that is not a Cons.
 Copyright (c) 2017-2026 Oliver Kreylos
 
 This file is part of the Lambda Programming Language.
@@ -19,45 +20,18 @@ with the Lambda Programming Language; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ***********************************************************************/
 
-#ifndef INTEGER_INCLUDED
-#define INTEGER_INCLUDED
+#ifndef ATOM_INCLUDED
+#define ATOM_INCLUDED
 
-#include "Atom.h"
+#include "Thing.h"
 
 namespace Lambda {
 
-class Integer:public Atom
+class Atom:public Thing
 	{
-	/* Elements: */
-	private:
-	long value; // The integer value
-	
-	/* Constructors and destructors: */
-	public:
-	Integer(long sValue) // Elementwise constructor
-		:value(sValue)
-		{
-		}
-	
-	/* Methods from class Thing: */
-	static const char* classIsA(void);
-	virtual std::string isA(void) const
-		{
-		return classIsA();
-		}
-	virtual std::ostream& print(std::ostream& os) const;
-	
-	/* New methods: */
-	long getValue(void) const // Returns the integer value
-		{
-		return value;
-		}
-	static long getValue(const Thing& thing) // Returns the integer value of the given thing if it is an Integer; throws exception otherwise
-		{
-		/* Try casting the given thing to an Integer and return that Integer's value: */
-		return to<Integer>(thing).value;
-		}
 	};
+
+typedef Misc::Autopointer<Atom> AtomPtr; // Type for pointers to Atom objects
 
 }
 

@@ -22,11 +22,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #ifndef BOOLEAN_INCLUDED
 #define BOOLEAN_INCLUDED
 
-#include "Thing.h"
+#include "Atom.h"
 
 namespace Lambda {
 
-class Boolean:public Thing
+class Boolean:public Atom
 	{
 	/* Elements: */
 	private:

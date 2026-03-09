@@ -22,11 +22,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #ifndef QUOTE_INCLUDED
 #define QUOTE_INCLUDED
 
-#include "Thing.h"
+#include "Atom.h"
 
 namespace Lambda {
 
-class Quote:public Thing
+class Quote:public Atom
 	{
 	/* Elements: */
 	private:

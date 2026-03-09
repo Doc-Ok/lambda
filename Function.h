@@ -25,11 +25,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <stddef.h>
 #include <vector>
 
-#include "Thing.h"
+#include "Atom.h"
 
 namespace Lambda {
 
-class Function:public Thing
+class Function:public Atom
 	{
 	/* Protected methods: */
 	protected:
@@ -64,7 +64,7 @@ class Function:public Thing
 		}
 	};
 
-typedef Misc::Autopointer<Function> FunctionPtr; // Class for pointers to Function objects
+typedef Misc::Autopointer<Function> FunctionPtr; // Type for pointers to Function objects
 
 }
 

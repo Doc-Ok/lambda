@@ -37,6 +37,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 namespace Lambda {
 
+/****************
+Global variables:
+****************/
+
+bool parserKnowsNumbers=true;
+
 namespace {
 
 /****************
@@ -110,8 +116,8 @@ ThingPtr parse(InputStream& is)
 		char* namePtr=nameBuf;
 		char* nameEnd=nameBuf+sizeof(nameBuf)-2;
 		bool first=true;
-		bool maybeInteger=true;
-		bool maybeFloatingPoint=true;
+		bool maybeInteger=parserKnowsNumbers;
+		bool maybeFloatingPoint=parserKnowsNumbers;
 		bool negate=false;
 		long integer=0;
 		double floatingPoint=0.0;

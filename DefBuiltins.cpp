@@ -39,10 +39,37 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "Lambda.h"
 #include "Integer.h"
 #include "FloatingPoint.h"
+#include "Parser.h"
 
 namespace Lambda {
 
 namespace Builtin {
+
+/*******************
+Functions with Atom:
+*******************/
+
+class AtomP:public Function // Predicate function returning true if the argument is an Atom
+	{
+	/* Methods from class Thing: */
+	public:
+	virtual std::ostream& print(std::ostream& os) const
+		{
+		os<<"(Builtin::AtomP expr): (a . b) |-> #f, expr |-> #t";
+		
+		return os;
+		}
+	
+	/* Methods from class Function: */
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context)
+		{
+		/* Check the argument list: */
+		checkArity(1,arguments);
+		
+		/* Return a new Boolean with true if the first argument evaluates to an Atom, false otherwise: */
+		return new Boolean(is<Atom>(*evalArg(0,arguments,context)));
+		}
+	};
 
 /*******************
 Functions with Null:
@@ -279,6 +306,33 @@ class Or:public Function // Logical or
 		return new Boolean(Boolean::getValue(*evalArg(0,arguments,context))||Boolean::getValue(*evalArg(1,arguments,context)));
 		}
 	};
+
+/***********************
+Functions with Function:
+***********************/
+
+class FunctionP:public Function // Predicate function returning true if the argument is a Function
+	{
+	/* Methods from class Thing: */
+	public:
+	virtual std::ostream& print(std::ostream& os) const
+		{
+		os<<"(Builtin::FunctionP expr): (lambda (...) ...) |-> #t, expr |-> #f";
+		
+		return os;
+		}
+	
+	/* Methods from class Function: */
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context)
+		{
+		/* Check the argument list: */
+		checkArity(1,arguments);
+		
+		/* Return a new Boolean with true if the first argument evaluates to a Function, false otherwise: */
+		return new Boolean(is<Function>(*evalArg(0,arguments,context)));
+		}
+	};
+
 
 /*********************
 Functions with Lambda:
@@ -640,6 +694,23 @@ class Div:public Function // Class to divide any number of Integers and/or Float
 
 class Mod:public Function // Class to calculate the modulus of two Integers or FloatingPoints
 	{
+	/* Private methods: */
+	private:
+	static long posMod(long a,long b) // Calculates positive modulo
+		{
+		long result=a%b;
+		if(result<0)
+			result+=b>0?b:-b;
+		return result;
+		}
+	static double posMod(double a,double b) // Calculates positive modulo
+		{
+		double result=fmod(a,b);
+		if(result<0.0)
+			result+=b>0.0?b:-b;
+		return result;
+		}
+	
 	/* Methods from class Thing: */
 	public:
 	virtual std::ostream& print(std::ostream& os) const
@@ -669,18 +740,18 @@ class Mod:public Function // Class to calculate the modulus of two Integers or F
 		if(i0!=0)
 			{
 			if(i1!=0)
-				return new Integer(i0->getValue()%i1->getValue());
+				return new Integer(posMod(i0->getValue(),i1->getValue()));
 			else if(f1!=0)
-				return new FloatingPoint(fmod(double(i0->getValue()),f1->getValue()));
+				return new FloatingPoint(posMod(double(i0->getValue()),f1->getValue()));
 			else
 				throw IsNotAError(*value1,"an Integer");
 			}
 		else if(f0!=0)
 			{
 			if(i1!=0)
-				return new FloatingPoint(fmod(f0->getValue(),double(i1->getValue())));
+				return new FloatingPoint(posMod(f0->getValue(),double(i1->getValue())));
 			else if(f1!=0)
-				return new FloatingPoint(fmod(f0->getValue(),f1->getValue()));
+				return new FloatingPoint(posMod(f0->getValue(),f1->getValue()));
 			else
 				throw IsNotAError(*value1,"a FloatingPoint");
 			}
@@ -831,10 +902,141 @@ class Atan2:public Function // Class to calculate the full-circle arctangent
 		}
 	};
 
+void forgetMath(Context& context);
+void rememberMath(Context& context);
+
+class ForgetMath:public Function // Class to make the Lambda Programming Language forget all about math
+	{
+	/* Methods from class Thing: */
+	public:
+	virtual std::ostream& print(std::ostream& os) const
+		{
+		os<<"(Builtin::ForgetMath) |-> partial amnesia";
+		
+		return os;
+		}
+	
+	/* Methods from class Function: */ \
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context)
+		{
+		/* Check the argument list: */
+		checkArity(0,arguments);
+		
+		forgetMath(context);
+		
+		return 0;
+		}
+	};
+
+class RememberMath:public Function // Class to make the Lambda Programming Language remember all about math
+	{
+	/* Methods from class Thing: */
+	public:
+	virtual std::ostream& print(std::ostream& os) const
+		{
+		os<<"(Builtin::RememberMath) |-> total clarity";
+		
+		return os;
+		}
+	
+	/* Methods from class Function: */ \
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context)
+		{
+		/* Check the argument list: */
+		checkArity(0,arguments);
+		
+		rememberMath(context);
+		
+		return 0;
+		}
+	};
+
+void forgetMath(Context& context)
+	{
+	/* Make the parser forget numbers: */
+	parserKnowsNumbers=false;
+	
+	/* Undefine all math functions in the context: */
+	context.removeThing("=");
+	context.removeThing("/=");
+	context.removeThing("<");
+	context.removeThing("<=");
+	context.removeThing(">=");
+	context.removeThing(">");
+	context.removeThing("+");
+	context.removeThing("-");
+	context.removeThing("*");
+	context.removeThing("/");
+	context.removeThing("%");
+	context.removeThing("pi");
+	context.removeThing("e");
+	context.removeThing("abs");
+	context.removeThing("floor");
+	context.removeThing("ceil");
+	context.removeThing("sqrt");
+	context.removeThing("exp");
+	context.removeThing("log");
+	context.removeThing("exp10");
+	context.removeThing("log10");
+	context.removeThing("sin");
+	context.removeThing("cos");
+	context.removeThing("tan");
+	context.removeThing("asin");
+	context.removeThing("acos");
+	context.removeThing("atan");
+	context.removeThing("pow");
+	context.removeThing("atan2");
+	
+	context.removeThing("forget-math");
+	context.setThing("remember-math",*new Builtin::RememberMath);
+	}
+
+void rememberMath(Context& context)
+	{
+	/* Make the parser remember numbers: */
+	parserKnowsNumbers=true;
+	
+	/* Redefine all math functions in the context: */
+	context.setThing("=",*new Builtin::Equal);
+	context.setThing("/=",*new Builtin::Unequal);
+	context.setThing("<",*new Builtin::LessThan);
+	context.setThing("<=",*new Builtin::LessEqual);
+	context.setThing(">=",*new Builtin::GreaterEqual);
+	context.setThing(">",*new Builtin::Greater);
+	context.setThing("+",*new Builtin::Add);
+	context.setThing("-",*new Builtin::Sub);
+	context.setThing("*",*new Builtin::Mult);
+	context.setThing("/",*new Builtin::Div);
+	context.setThing("%",*new Builtin::Mod);
+	context.setThing("pi",*new FloatingPoint(M_PI));
+	context.setThing("e",*new FloatingPoint(M_E));
+	context.setThing("abs",*new Builtin::Abs);
+	context.setThing("floor",*new Builtin::Floor);
+	context.setThing("ceil",*new Builtin::Ceil);
+	context.setThing("sqrt",*new Builtin::Sqrt);
+	context.setThing("exp",*new Builtin::Exp);
+	context.setThing("log",*new Builtin::Log);
+	context.setThing("exp10",*new Builtin::Exp10);
+	context.setThing("log10",*new Builtin::Log10);
+	context.setThing("sin",*new Builtin::Sin);
+	context.setThing("cos",*new Builtin::Cos);
+	context.setThing("tan",*new Builtin::Tan);
+	context.setThing("asin",*new Builtin::Asin);
+	context.setThing("acos",*new Builtin::Acos);
+	context.setThing("atan",*new Builtin::Atan);
+	context.setThing("pow",*new Builtin::Pow);
+	context.setThing("atan2",*new Builtin::Atan2);
+	
+	context.removeThing("remember-math");
+	context.setThing("forget-math",*new Builtin::ForgetMath);
+	}
+
 }
 
 void defBuiltins(Context& context)
 	{
+	context.setThing("atom?",*new Builtin::AtomP);
+	
 	context.setThing("null?",*new Builtin::NullP);
 	
 	context.setThing("cons?",*new Builtin::ConsP);
@@ -853,14 +1055,18 @@ void defBuiltins(Context& context)
 	context.setThing("and",*new Builtin::And);
 	context.setThing("or",*new Builtin::Or);
 	
+	context.setThing("function?",*new Builtin::FunctionP);
+	
 	context.setThing("if",*new If);
 	context.setThing("def",*new Def);
 	context.setThing("load",*new Load);
 	
 	context.setThing("lambda",*new Builtin::Lambda);
 	
+	#if 0
+	
 	context.setThing("=",*new Builtin::Equal);
-	context.setThing("!=",*new Builtin::Unequal);
+	context.setThing("/=",*new Builtin::Unequal);
 	context.setThing("<",*new Builtin::LessThan);
 	context.setThing("<=",*new Builtin::LessEqual);
 	context.setThing(">=",*new Builtin::GreaterEqual);
@@ -892,6 +1098,15 @@ void defBuiltins(Context& context)
 	
 	context.setThing("pow",*new Builtin::Pow);
 	context.setThing("atan2",*new Builtin::Atan2);
+	
+	context.setThing("forget-math",*new Builtin::ForgetMath);
+	
+	#else
+	
+	parserKnowsNumbers=false;
+	context.setThing("remember-math",*new Builtin::RememberMath);
+	
+	#endif
 	}
 
 }

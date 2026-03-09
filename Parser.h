@@ -32,6 +32,8 @@ class InputStream;
 
 namespace Lambda {
 
+extern bool parserKnowsNumbers; // Flag to enable or disable the parser's knowledge of numeric types
+
 ThingPtr parse(InputStream& is); // Main parser function; reads from the given input stream until an expression is complete, then returns it
 
 }

@@ -22,11 +22,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #ifndef FLOATINGPOINT_INCLUDED
 #define FLOATINGPOINT_INCLUDED
 
-#include "Thing.h"
+#include "Atom.h"
 
 namespace Lambda {
 
-class FloatingPoint:public Thing
+class FloatingPoint:public Atom
 	{
 	/* Elements: */
 	private:

@@ -23,11 +23,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #define NAME_INCLUDED
 
 #include "String.h"
-#include "Thing.h"
+#include "Atom.h"
 
 namespace Lambda {
 
-class Name:public Thing
+class Name:public Atom
 	{
 	/* Elements: */
 	private:
