@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "Def.h"
 #include "Load.h"
 #include "Lambda.h"
+#include "Mu.h"
 #include "Integer.h"
 #include "FloatingPoint.h"
 #include "Parser.h"
@@ -68,7 +69,7 @@ class AtomP:public Function // Predicate function returning true if the argument
 		checkArity(1,arguments);
 		
 		/* Return a new Boolean with true if the first argument evaluates to an Atom, false otherwise: */
-		return new Boolean(is<Atom>(*evalArg(0,arguments,context)));
+		return Boolean::get(is<Atom>(*evalArg(0,arguments,context)));
 		}
 	};
 
@@ -94,7 +95,7 @@ class VoidP:public Function // Predicate function returning true if the argument
 		checkArity(1,arguments);
 		
 		/* Return a new Boolean with true if the first argument evaluates to the Void, false otherwise: */
-		return new Boolean(evalArg(0,arguments,context)==&Void::the);
+		return Boolean::get(Void::is(*evalArg(0,arguments,context)));
 		}
 	};
 
@@ -119,8 +120,8 @@ class NullP:public Function // Predicate function returning true if the argument
 		/* Check the argument list: */
 		checkArity(1,arguments);
 		
-		/* Return a new Boolean with true if the first argument evaluates to a Null, false otherwise: */
-		return new Boolean(is<Null>(*evalArg(0,arguments,context)));
+		/* Return a new Boolean with true if the first argument evaluates to the Null, false otherwise: */
+		return Boolean::get(Null::is(*evalArg(0,arguments,context)));
 		}
 	};
 
@@ -146,7 +147,7 @@ class ConsP:public Function // Predicate function returning true if the argument
 		checkArity(1,arguments);
 		
 		/* Return a new Boolean with true if the first argument evaluates to a Null, false otherwise: */
-		return new Boolean(is<Cons>(*evalArg(0,arguments,context)));
+		return Boolean::get(is<Cons>(*evalArg(0,arguments,context)));
 		}
 	};
 
@@ -264,7 +265,7 @@ class BooleanP:public Function // Predicate function returning true if the argum
 		checkArity(1,arguments);
 		
 		/* Return a new Boolean with true if the first argument evaluates to a Boolean, false otherwise: */
-		return new Boolean(is<Boolean>(*evalArg(0,arguments,context)));
+		return Boolean::get(is<Boolean>(*evalArg(0,arguments,context)));
 		}
 	};
 
@@ -286,7 +287,7 @@ class Not:public Function // Logical not
 		checkArity(1,arguments);
 		
 		/* Return a new Boolean with the logical not of the result of evaluating the first argument: */
-		return new Boolean(!Boolean::getValue(*evalArg(0,arguments,context)));
+		return Boolean::get(!Boolean::getValue(*evalArg(0,arguments,context)));
 		}
 	};
 
@@ -308,7 +309,7 @@ class And:public Function // Logical and
 		checkArity(2,arguments);
 		
 		/* Return a new Boolean with the logical and of the result of evaluating the first two arguments: */
-		return new Boolean(Boolean::getValue(*evalArg(0,arguments,context))&&Boolean::getValue(*evalArg(1,arguments,context)));
+		return Boolean::get(Boolean::getValue(*evalArg(0,arguments,context))&&Boolean::getValue(*evalArg(1,arguments,context)));
 		}
 	};
 
@@ -330,7 +331,7 @@ class Or:public Function // Logical or
 		checkArity(2,arguments);
 		
 		/* Return a new Boolean with the logical or of the result of evaluating the first two arguments: */
-		return new Boolean(Boolean::getValue(*evalArg(0,arguments,context))||Boolean::getValue(*evalArg(1,arguments,context)));
+		return Boolean::get(Boolean::getValue(*evalArg(0,arguments,context))||Boolean::getValue(*evalArg(1,arguments,context)));
 		}
 	};
 
@@ -356,10 +357,9 @@ class FunctionP:public Function // Predicate function returning true if the argu
 		checkArity(1,arguments);
 		
 		/* Return a new Boolean with true if the first argument evaluates to a Function, false otherwise: */
-		return new Boolean(is<Function>(*evalArg(0,arguments,context)));
+		return Boolean::get(is<Function>(*evalArg(0,arguments,context)));
 		}
 	};
-
 
 /*********************
 Functions with Lambda:
@@ -381,6 +381,29 @@ class Lambda:public Function // Class to make a Lambda from an argument list
 		{
 		/* Create a new Lambda from the argument list: */
 		return new ::Lambda::Lambda(arguments,context);
+		}
+	};
+
+/*********************
+Functions with Mu:
+*********************/
+
+class Mu:public Function // Class to make a Mu from an argument list
+	{
+	/* Methods from class Thing: */
+	public:
+	std::ostream& print(std::ostream& os) const
+		{
+		os<<"(Builtin::Mu arg body1 ... bodyn) |-> mu";
+		
+		return os;
+		}
+	
+	/* Methods from class Function: */
+	ThingPtr evaluate(ThingPtr arguments,Context& context)
+		{
+		/* Create a new Mu from the argument list: */
+		return new ::Lambda::Mu(arguments);
 		}
 	};
 
@@ -422,18 +445,18 @@ class NAME:public Function \
 		if(i0!=0) \
 			{ \
 			if(i1!=0) \
-				return new Boolean(i0->getValue() OPERATOR i1->getValue()); \
+				return Boolean::get(i0->getValue() OPERATOR i1->getValue()); \
 			else if(f1!=0) \
-				return new Boolean(double(i0->getValue()) OPERATOR f1->getValue()); \
+				return Boolean::get(double(i0->getValue()) OPERATOR f1->getValue()); \
 			else \
 				throw IsNotAError(*value1,"an Integer"); \
 			} \
 		else if(f0!=0) \
 			{ \
 			if(i1!=0) \
-				return new Boolean(f0->getValue() OPERATOR double(i1->getValue())); \
+				return Boolean::get(f0->getValue() OPERATOR double(i1->getValue())); \
 			else if(f1!=0) \
-				return new Boolean(f0->getValue() OPERATOR f1->getValue()); \
+				return Boolean::get(f0->getValue() OPERATOR f1->getValue()); \
 			else \
 				throw IsNotAError(*value1,"a FloatingPoint"); \
 			} \
@@ -492,7 +515,7 @@ class Add:public Function // Class to add any number of Integers and/or Floating
 				}
 			
 			if(!maybeInteger)
-				floatingPoint+=FloatingPoint::getValue(**vIt);
+				floatingPoint+=FloatingPoint::convertValue(**vIt);
 			}
 		
 		if(maybeInteger)
@@ -561,7 +584,7 @@ class Sub:public Function // Class to subtract any number of Integers and/or Flo
 					}
 				
 				if(!maybeInteger)
-					floatingPoint-=FloatingPoint::getValue(**vIt);
+					floatingPoint-=FloatingPoint::convertValue(**vIt);
 				}
 			
 			if(maybeInteger)
@@ -610,7 +633,7 @@ class Mult:public Function // Class to multiply any number of Integers and/or Fl
 				}
 			
 			if(!maybeInteger)
-				floatingPoint*=FloatingPoint::getValue(**vIt);
+				floatingPoint*=FloatingPoint::convertValue(**vIt);
 			}
 		
 		if(maybeInteger)
@@ -702,7 +725,7 @@ class Div:public Function // Class to divide any number of Integers and/or Float
 					}
 				else
 					{
-					double value=FloatingPoint::getValue(**vIt);
+					double value=FloatingPoint::convertValue(**vIt);
 					if(value==0.0)
 						throw Error("Division by zero");
 					floatingPoint/=value;
@@ -958,7 +981,7 @@ class Print:public Function // Class to evaluate and print its arguments
 			}
 		
 		/* Return nothing: */
-		return &Void::the;
+		return Void::get();
 		}
 	};
 
@@ -985,7 +1008,7 @@ class ForgetMath:public Function // Class to make the Lambda Programming Languag
 		forgetMath(context);
 		
 		/* Return nothing: */
-		return &Void::the;
+		return Void::get();
 		}
 	};
 
@@ -1009,7 +1032,7 @@ class RememberMath:public Function // Class to make the Lambda Programming Langu
 		rememberMath(context);
 		
 		/* Return nothing: */
-		return &Void::the;
+		return Void::get();
 		}
 	};
 
@@ -1099,7 +1122,7 @@ void defBuiltins(Context& context)
 	{
 	context.setThing("atom?",*new Builtin::AtomP);
 	
-	context.setThing("void",Void::the);
+	context.setThing("void",*Void::get());
 	context.setThing("void?",*new Builtin::VoidP);
 	
 	context.setThing("null?",*new Builtin::NullP);
@@ -1114,8 +1137,8 @@ void defBuiltins(Context& context)
 	context.setThing("begin",*new Begin);
 	
 	context.setThing("boolean?",*new Builtin::BooleanP);
-	context.setThing("#f",*new Boolean(false));
-	context.setThing("#t",*new Boolean(true));
+	context.setThing("#f",*Boolean::get(false));
+	context.setThing("#t",*Boolean::get(true));
 	context.setThing("not",*new Builtin::Not);
 	context.setThing("and",*new Builtin::And);
 	context.setThing("or",*new Builtin::Or);
@@ -1127,6 +1150,7 @@ void defBuiltins(Context& context)
 	context.setThing("load",*new Load);
 	
 	context.setThing("lambda",*new Builtin::Lambda);
+	context.setThing("mu",*new Builtin::Mu);
 	
 	#if 1
 	

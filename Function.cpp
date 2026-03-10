@@ -73,11 +73,11 @@ void Function::checkArity(size_t arity,ThingPtr arguments)
 	
 	/* Check that all arguments have been checked off, and that the remaining thing is a Null: */
 	if(arity>0)
-		throw Error("Not enough function arguments");
+		throw Error(printThing(*arguments)+"does not have enough function arguments");
 	else if(dynamic_cast<Null*>(thing)==0)
 		{
 		if(dynamic_cast<Cons*>(thing)!=0)
-			throw Error("Too many function arguments");
+			throw Error(printThing(*arguments)+"has too many function arguments");
 		else
 			throw IsNotAError(*arguments,"a function argument list");
 		}

@@ -57,7 +57,7 @@ ThingPtr parseCons(InputStream& is) // Function to parse a Cons expression
 	else if(is.peek()==')')
 		{
 		/* Return an empty list: */
-		return new Null;
+		return Null::get();
 		}
 	
 	/* Parse the Cons's left child: */

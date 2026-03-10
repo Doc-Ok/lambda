@@ -69,26 +69,12 @@ struct Turtle::Point
 Methods of class Turtle:
 ***********************/
 
-void Turtle::init(void)
+void Turtle::resetTurtle(void)
 	{
-	/* Open the display window: */
-	GLContext::Properties contextProperties;
-	contextProperties.depthBufferSize=0; // We neither need nor want a depth buffer
-	window=new GLWindow("Lambda Turtle",GLWindow::Size(1024,768),true,contextProperties);
+	/* Clear the display: */
+	polylines.clear();
 	
-	/* Register the close callback: */
-	window->getCloseCallbacks().add(this,&Turtle::windowClosedCallback);
-	
-	/* Set up poll request structures to handle X events on the display window and turtle commands: */
-	memset(pollRequests,0,2*sizeof(struct pollfd));
-	
-	pollRequests[0].fd=window->getConnectionNumber();
-	pollRequests[0].events=POLLIN;
-	
-	pollRequests[1].fd=commandPipe.getReadFd();
-	pollRequests[1].events=POLLIN;
-	
-	/* Initialize the turtle state: */
+	/* Move the turtle back to its initial state: */
 	x=0.0;
 	y=0.0;
 	angleDeg=0.0;
@@ -278,12 +264,47 @@ void Turtle::executeCommand(const Turtle::PipeCommand& command)
 			/* Lower the pen: */
 			pen=true;
 			
+			/* We must update the display: */
+			mustRedraw=true;
+			
+			break;
+		
+		case Reset:
+			/* Reset the turtle: */
+			resetTurtle();
+			
+			/* We must update the display: */
+			mustRedraw=true;
+			
 			break;
 		
 		case NumCommands:
 			// break out...
 			break;
 		}
+	}
+
+void Turtle::init(void)
+	{
+	/* Open the display window: */
+	GLContext::Properties contextProperties;
+	contextProperties.depthBufferSize=0; // We neither need nor want a depth buffer
+	window=new GLWindow("Lambda Turtle",GLWindow::Size(1024,768),true,contextProperties);
+	
+	/* Register the close callback: */
+	window->getCloseCallbacks().add(this,&Turtle::windowClosedCallback);
+	
+	/* Set up poll request structures to handle X events on the display window and turtle commands: */
+	memset(pollRequests,0,2*sizeof(struct pollfd));
+	
+	pollRequests[0].fd=window->getConnectionNumber();
+	pollRequests[0].events=POLLIN;
+	
+	pollRequests[1].fd=commandPipe.getReadFd();
+	pollRequests[1].events=POLLIN;
+	
+	/* Initialize the turtle state: */
+	resetTurtle();
 	}
 
 void Turtle::deinit(void)

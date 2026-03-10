@@ -30,16 +30,20 @@ class Boolean:public Atom
 	{
 	/* Elements: */
 	private:
+	static Boolean theTrue; // The single true Boolean object in existence
+	static Boolean theFalse; // The single false Boolean object in existence
 	bool value; // The boolean value
 	
 	/* Constructors and destructors: */
-	public:
 	Boolean(bool sValue) // Elementwise constructor
 		:value(sValue)
 		{
+		/* Take a reference to this object so it will never be destroyed: */
+		ref();
 		}
 	
 	/* Methods from class Thing: */
+	public:
 	static const char* classIsA(void);
 	virtual std::string isA(void) const
 		{
@@ -48,6 +52,11 @@ class Boolean:public Atom
 	virtual std::ostream& print(std::ostream& os) const;
 	
 	/* New methods: */
+	static Boolean* get(bool value) // Returns a pointer to the Boolean object representing the given boolean value
+		{
+		/* Return either the single true Boolean or the single false Boolean: */
+		return value?&theTrue:&theFalse;
+		}
 	bool getValue(void) const // Returns the boolean value
 		{
 		return value;

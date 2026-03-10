@@ -28,6 +28,17 @@ namespace Lambda {
 
 class Null:public Atom
 	{
+	/* Elements: */
+	private:
+	static Null the; // The single Null object in existence
+	
+	/* Constructors and destructors: */
+	Null(void) // Not publicly accessible
+		{
+		/* Take a reference to this object so it will never be destroyed: */
+		ref();
+		}
+	
 	/* Methods from class Thing: */
 	public:
 	static const char* classIsA(void);
@@ -36,6 +47,16 @@ class Null:public Atom
 		return classIsA();
 		}
 	virtual std::ostream& print(std::ostream& os) const;
+	
+	/* New methods: */
+	static Null* get(void) // Returns a pointer to the Null object
+		{
+		return &the;
+		}
+	static bool is(const Thing& thing) // Returns true if the given thing is the Null object
+		{
+		return &thing==&the;
+		}
 	};
 
 }

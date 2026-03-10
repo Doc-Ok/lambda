@@ -1,5 +1,5 @@
 /***********************************************************************
-Lambda - Class for a function that creates lambda expressions.
+Lambda - Class representing lambda expressions.
 Copyright (c) 2017-2026 Oliver Kreylos
 
 This file is part of the Lambda Programming Language.
@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 namespace Lambda {
 
-class Lambda:public Function // Class representing lambda expressions
+class Lambda:public Function
 	{
 	/* Elements: */
 	private:

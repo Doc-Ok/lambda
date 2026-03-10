@@ -71,7 +71,7 @@ ThingPtr Load::evaluate(ThingPtr arguments,Context& context)
 	load(fileName.c_str(),context);
 	
 	/* Return nothing: */
-	return &Void::the;
+	return Void::get();
 	}
 
 void Load::load(const char* fileName,Context& context)

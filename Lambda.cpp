@@ -1,5 +1,5 @@
 /***********************************************************************
-Lambda - Class for a function that creates lambda expressions.
+Lambda - Class representing lambda expressions.
 Copyright (c) 2017-2026 Oliver Kreylos
 
 This file is part of the Lambda Programming Language.
@@ -45,7 +45,7 @@ Lambda::Lambda(ThingPtr arguments,Context& sClosure)
 		throw IsNotAError(*arguments,"a non-empty proper list");
 	
 	/* Check if there are argument names: */
-	if(!is<Null>(cons->car()))
+	if(!Null::is(cons->car()))
 		{
 		/* Check that the list of argument names is a proper list: */
 		Cons* argCons=toPtr<Cons>(cons->car());
@@ -118,7 +118,7 @@ ThingPtr Lambda::evaluate(ThingPtr arguments,Context& context)
 		closure->setThing(name,*this);
 	
 	/* Evaluate the body expressions: */
-	ThingPtr result=&Void::the;
+	ThingPtr result=Void::get();
 	for(std::vector<ThingPtr>::iterator bIt=body.begin();bIt!=body.end();++bIt)
 		result=(*bIt)->evaluate(*closure);
 	

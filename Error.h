@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #ifndef ERROR_INCLUDED
 #define ERROR_INCLUDED
 
+#include <string>
 #include <stdexcept>
 
 /* Forward declarations: */
@@ -56,6 +57,7 @@ class IsNotAError:public Error // Class for type conversion errors
 Convenience functions:
 *********************/
 
+std::string printThing(const Thing& thing); // Prints a string to a C++ string
 Error makeError(const char* fmtString,...); // Returns an error exception with an error message created by a printf format string and its arguments
 
 }

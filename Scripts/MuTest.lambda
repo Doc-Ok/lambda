@@ -1,0 +1,19 @@
+(def repeat-eval
+	(mu args
+		(def list (eval (car args)))
+		(if (null? list)
+			void
+			(begin
+				(eval (car list))
+				(repeat-eval (cdr list))
+			)
+		)
+	)
+)
+
+(def repeat
+	(mu args
+		(def list (copy (eval (car args)) (cdr args)))
+		(repeat-eval list)
+	)
+)

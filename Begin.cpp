@@ -46,7 +46,7 @@ ThingPtr Begin::evaluate(ThingPtr arguments,Context& context)
 	size_t arity=getArity(arguments);
 	
 	/* Evaluate all arguments in order: */
-	ThingPtr result=&Void::the;
+	ThingPtr result=Void::get();
 	Thing* argPtr=arguments.getPointer();
 	while(arity>0)
 		{

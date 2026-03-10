@@ -97,9 +97,9 @@ include $(VRUI_MAKEDIR)/BasicMakefile
 
 LAMBDA_SOURCES=$(wildcard *.cpp)
 
-$(LambdaMain.cpp:%.cpp=$(OBJDIR)/%.o): CFLAGS += -DLAMBDA_USE_READLINE=0
+$(LambdaMain.cpp:%.cpp=$(OBJDIR)/%.o): CFLAGS += -DLAMBDA_USE_READLINE=1
 
-# $(EXEDIR)/Lambda: PACKAGES += READLINE
+$(EXEDIR)/Lambda: PACKAGES += READLINE
 
 $(EXEDIR)/Lambda: $(LAMBDA_SOURCES:%.cpp=$(OBJDIR)/%.o)
 .PHONY: Lambda

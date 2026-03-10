@@ -1,6 +1,6 @@
 /***********************************************************************
-Void - Class representing nothing at all, the Lambda Programming
-Language's equivalent of a null pointer.
+Mu - Class representing mu expressions. A mu expression is a non-closure
+variadic lambda expression.
 Copyright (c) 2017-2026 Oliver Kreylos
 
 This file is part of the Lambda Programming Language.
@@ -20,44 +20,36 @@ with the Lambda Programming Language; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ***********************************************************************/
 
-#ifndef VOID_INCLUDED
-#define VOID_INCLUDED
+#ifndef MU_INCLUDED
+#define MU_INCLUDED
 
-#include "Atom.h"
+#include <vector>
+
+#include "String.h"
+#include "Function.h"
 
 namespace Lambda {
 
-class Void:public Atom
+class Mu:public Function
 	{
 	/* Elements: */
-	private:
-	static Void the; // The single Void object in existence
+	String argumentName; // The name of the mu expression's single argument, which is the unevaluated cdr of the list in which the mu expression was evaluated
+	std::vector<ThingPtr> body; // The list of expressions comprising the mu expression's body
 	
 	/* Constructors and destructors: */
-	Void(void) // Not publicly accessible
-		{
-		/* Take a reference to this object so it will never be destroyed: */
-		ref();
-		}
+	public:
+	Mu(ThingPtr arguments); // Constructs a mu expression from the given thing, which needs to be a list consisting of a single argument name followed by one or more body expressions
 	
 	/* Methods from class Thing: */
-	public:
 	static const char* classIsA(void);
-	virtual std::string isA(void) const
+	std::string isA(void) const
 		{
 		return classIsA();
 		}
 	virtual std::ostream& print(std::ostream& os) const;
 	
-	/* New methods: */
-	static Void* get(void) // Returns a pointer to the Void object
-		{
-		return &the;
-		}
-	static bool is(const Thing& thing) // Returns true if the given thing is the Void object
-		{
-		return &thing==&the;
-		}
+	/* Methods from class Function: */
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context);
 	};
 
 }

@@ -163,7 +163,7 @@ size_t Cons::checkList(const Thing& thing)
 		}
 	
 	/* It's not proper list if the first non-Cons thing we found is not a Null: */
-	if(!is<Null>(*thingPtr))
+	if(!Null::is(*thingPtr))
 		throw IsNotAError(thing,"a proper list");
 	
 	return result;

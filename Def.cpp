@@ -97,7 +97,7 @@ ThingPtr Def::evaluate(ThingPtr arguments,Context& context)
 		throw IsNotAError(*arguments,"a valid definition");
 	
 	/* Return nothing: */
-	return &Void::the;
+	return Void::get();
 	}
 
 }

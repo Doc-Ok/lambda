@@ -11,6 +11,13 @@ Copyright (c) 2017-2026 Oliver Kreylos
 
 namespace Lambda {
 
+/********************************
+Static elements of class Boolean:
+********************************/
+
+Boolean Boolean::theTrue(true);
+Boolean Boolean::theFalse(false);
+
 /************************
 Methods of class Boolean:
 ************************/

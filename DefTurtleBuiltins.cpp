@@ -40,9 +40,9 @@ Global state:
 
 Turtle* activeTurtle=0; // Pointer to the currently active turtle
 
-/*******************
-Functions with Atom:
-*******************/
+/*********************
+Functions with Turtle:
+*********************/
 
 class Turtle:public Function // Function to create a new turtle
 	{
@@ -69,7 +69,7 @@ class Turtle:public Function // Function to create a new turtle
 		/* Create a new turtle: */
 		activeTurtle=new ::Lambda::Turtle;
 		
-		return &Void::the;
+		return Void::get();
 		}
 	};
 
@@ -101,7 +101,7 @@ class Forward:public Function // Function to move the turtle forward by a number
 		/* Send a command to the active turtle: */
 		activeTurtle->sendCommand(::Lambda::Turtle::Forward,steps);
 		
-		return &Void::the;
+		return Void::get();
 		}
 	};
 
@@ -133,7 +133,7 @@ class Back:public Function // Function to move the turtle back by a number of st
 		/* Send a command to the active turtle: */
 		activeTurtle->sendCommand(::Lambda::Turtle::Back,steps);
 		
-		return &Void::the;
+		return Void::get();
 		}
 	};
 
@@ -165,7 +165,7 @@ class Left:public Function // Function to rotate the turtle left by a number of 
 		/* Send a command to the active turtle: */
 		activeTurtle->sendCommand(::Lambda::Turtle::Left,degrees);
 		
-		return &Void::the;
+		return Void::get();
 		}
 	};
 
@@ -197,7 +197,7 @@ class Right:public Function // Function to rotate the turtle right by a number o
 		/* Send a command to the active turtle: */
 		activeTurtle->sendCommand(::Lambda::Turtle::Right,degrees);
 		
-		return &Void::the;
+		return Void::get();
 		}
 	};
 
@@ -225,7 +225,7 @@ class PenUp:public Function // Function to lift the turtle's pen
 		/* Send a command to the active turtle: */
 		activeTurtle->sendCommand(::Lambda::Turtle::PenUp);
 		
-		return &Void::the;
+		return Void::get();
 		}
 	};
 
@@ -253,7 +253,35 @@ class PenDown:public Function // Function to lower the turtle's pen
 		/* Send a command to the active turtle: */
 		activeTurtle->sendCommand(::Lambda::Turtle::PenDown);
 		
-		return &Void::the;
+		return Void::get();
+		}
+	};
+
+class Reset:public Function // Function to reset the turtle
+	{
+	/* Methods from class Thing: */
+	public:
+	virtual std::ostream& print(std::ostream& os) const
+		{
+		os<<"(Builtin::Reset) |->";
+		
+		return os;
+		}
+	
+	/* Methods from class Function: */
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context)
+		{
+		/* Check the argument list: */
+		checkArity(0,arguments);
+		
+		/* Check that there is an active turtle: */
+		if(activeTurtle==0)
+			throw Error("There is no active turtle");
+		
+		/* Send a command to the active turtle: */
+		activeTurtle->sendCommand(::Lambda::Turtle::Reset);
+		
+		return Void::get();
 		}
 	};
 
@@ -268,6 +296,7 @@ void defTurtleBuiltins(Context& context)
 	context.setThing("right",*new Builtin::Right);
 	context.setThing("penup",*new Builtin::PenUp);
 	context.setThing("pendown",*new Builtin::PenDown);
+	context.setThing("reset",*new Builtin::Reset);
 	}
 
 }

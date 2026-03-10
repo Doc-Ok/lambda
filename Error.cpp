@@ -61,6 +61,18 @@ IsNotAError::IsNotAError(const Thing& thing,const char* notAWhat)
 Convenience functions:
 *********************/
 
+std::string printThing(const Thing& thing)
+	{
+	/* Print the given thing into a string: */
+	std::stringstream stros;
+	stros<<'"';
+	thing.print(stros);
+	stros<<'"';
+	
+	/* Return the completed string: */
+	return std::move(stros.str());
+	}
+
 Error makeError(const char* fmtString,...)
 	{
 	/* Create the error message in a fixed-size on-stack buffer: */

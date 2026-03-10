@@ -77,7 +77,7 @@ void* parserThreadFunction(Lambda::InputStream* inputStream)
 			Lambda::ThingPtr result=expression->evaluate(*context);
 			
 			/* Print the result if it is something other than the Void: */
-			if(result!=&Lambda::Void::the)
+			if(!Lambda::Void::is(*result))
 				std::cout<<"= "<<*result<<std::endl;
 			}
 		catch(const std::runtime_error& err)

@@ -47,6 +47,13 @@
 	)
 )
 
+(def (copy n list)
+	(if (< n 1)
+		'()
+		(concat list (copy (- n 1) list))
+	)
+)
+
 (def (reverse-with accum list)
 	(if (null? list)
 		accum
@@ -148,3 +155,23 @@
 (def (bind2->1 f arg0) (lambda (a) (f arg0 a)))
 
 (def (bind1->0 f arg0) (lambda () (f arg0)))
+
+(def repeat-eval
+	(mu args
+		(def list (eval (car args)))
+		(if (null? list)
+			void
+			(begin
+				(eval (car list))
+				(repeat-eval (cdr list))
+			)
+		)
+	)
+)
+
+(def repeat
+	(mu args
+		(def list (copy (eval (car args)) (cdr args)))
+		(repeat-eval list)
+	)
+)

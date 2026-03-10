@@ -44,6 +44,7 @@ class Turtle
 		Forward,Back, // Take a "step" parameter in turtle units (the turtle is one unit across)
 		Left,Right, // Take an "angle" parameter in degrees
 		PenUp,PenDown, // Raises or lowers the turtle's pen
+		Reset, // Resets the turtle, i.e., clears the display and moves the turtle back to the original position and lowers the pen
 		NumCommands
 		};
 	
@@ -68,13 +69,14 @@ class Turtle
 	PolylineSet polylines; // The set of polylines drawn by the turtle
 	
 	/* Private methods: */
-	void init(void);
+	void resetTurtle(void);
 	void windowRectChangedCallback(Misc::CallbackData* cbData); // Called when the user moves or resizes the display window
 	void windowClosedCallback(Misc::CallbackData* cbData); // Called when the user closes the display window
 	void redrawDisplay(void); // Redraws the turtle's display window
 	void handleXEvents(int numEventsInQueue); // Handles all queued-up X events on the display window
 	void executeCommand(const PipeCommand& command); // Executes the given turtle command
-	void deinit(void);
+	void init(void); // Initializes the turtle after construction
+	void deinit(void); // De-initializes the turtle before destruction
 	void* controlThreadMethod(void); // The method controlling the turtle and its display in a background thread
 	
 	/* Constructors and destructors: */
