@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "Error.h"
 #include "Context.h"
+#include "Void.h"
 #include "Null.h"
 #include "Cons.h"
 #include "Name.h"
@@ -117,7 +118,7 @@ ThingPtr Lambda::evaluate(ThingPtr arguments,Context& context)
 		closure->setThing(name,*this);
 	
 	/* Evaluate the body expressions: */
-	ThingPtr result;
+	ThingPtr result=&Void::the;
 	for(std::vector<ThingPtr>::iterator bIt=body.begin();bIt!=body.end();++bIt)
 		result=(*bIt)->evaluate(*closure);
 	

@@ -35,6 +35,9 @@ class Load:public Function
 	
 	/* Methods from class Function: */
 	ThingPtr evaluate(ThingPtr arguments,Context& context);
+	
+	/* New methods: */
+	static void load(const char* fileName,Context& context); // Loads the given file inside the given context
 	};
 
 }

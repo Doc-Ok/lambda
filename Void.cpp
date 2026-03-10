@@ -1,6 +1,6 @@
 /***********************************************************************
-Parser - A class and functions to parse expressions entered via the
-console or read from a file.
+Void - Class representing nothing at all, the Lambda Programming
+Language's equivalent of a null pointer.
 Copyright (c) 2017-2026 Oliver Kreylos
 
 This file is part of the Lambda Programming Language.
@@ -20,23 +20,33 @@ with the Lambda Programming Language; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ***********************************************************************/
 
-#ifndef PARSER_INCLUDED
-#define PARSER_INCLUDED
+#include "Void.h"
 
-#include "Thing.h"
-
-/* Forward declarations: */
-namespace Lambda {
-class InputStream;
-}
+#include <iostream>
 
 namespace Lambda {
 
-extern bool parserKnowsNumbers; // Flag to enable or disable the parser's knowledge of numeric types
+/*****************************
+Static elements of class Void:
+*****************************/
 
-ThingPtr parse(InputStream& is); // Main parser function; reads from the given input stream until an expression is complete, then returns it
-void parseFile(const char* fileName); // Parses the given file
+Void Void::the;
+
+/*********************
+Methods of class Void:
+*********************/
+
+const char* Void::classIsA(void)
+	{
+	return "the Void";
+	}
+
+std::ostream& Void::print(std::ostream& os) const
+	{
+	/* Print the void token: */
+	os<<"void";
+	
+	return os;
+	}
 
 }
-
-#endif

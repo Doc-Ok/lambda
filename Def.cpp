@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "Error.h"
 #include "Context.h"
+#include "Void.h"
 #include "Cons.h"
 #include "Name.h"
 #include "Lambda.h"
@@ -96,7 +97,7 @@ ThingPtr Def::evaluate(ThingPtr arguments,Context& context)
 		throw IsNotAError(*arguments,"a valid definition");
 	
 	/* Return nothing: */
-	return 0;
+	return &Void::the;
 	}
 
 }

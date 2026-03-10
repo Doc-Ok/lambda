@@ -1,6 +1,6 @@
 /***********************************************************************
-Parser - A class and functions to parse expressions entered via the
-console or read from a file.
+DefTurtleBuiltIns - Function to define the built-in turtle control
+functions in an evaluation context.
 Copyright (c) 2017-2026 Oliver Kreylos
 
 This file is part of the Lambda Programming Language.
@@ -20,22 +20,17 @@ with the Lambda Programming Language; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ***********************************************************************/
 
-#ifndef PARSER_INCLUDED
-#define PARSER_INCLUDED
-
-#include "Thing.h"
+#ifndef DEFTURTLEBUILTINS_INCLUDED
+#define DEFTURTLEBUILTINS_INCLUDED
 
 /* Forward declarations: */
 namespace Lambda {
-class InputStream;
+class Context;
 }
 
 namespace Lambda {
 
-extern bool parserKnowsNumbers; // Flag to enable or disable the parser's knowledge of numeric types
-
-ThingPtr parse(InputStream& is); // Main parser function; reads from the given input stream until an expression is complete, then returns it
-void parseFile(const char* fileName); // Parses the given file
+void defTurtleBuiltins(Context& context); // Defines the Lambda Programming Language's built-in turtle control functions in the given evaluation context
 
 }
 

@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "Context.h"
 #include "Function.h"
+#include "Void.h"
 #include "Null.h"
 #include "Cons.h"
 #include "Quote.h"
@@ -68,6 +69,32 @@ class AtomP:public Function // Predicate function returning true if the argument
 		
 		/* Return a new Boolean with true if the first argument evaluates to an Atom, false otherwise: */
 		return new Boolean(is<Atom>(*evalArg(0,arguments,context)));
+		}
+	};
+
+/*******************
+Functions with Void:
+*******************/
+
+class VoidP:public Function // Predicate function returning true if the argument is the Void
+	{
+	/* Methods from class Thing: */
+	public:
+	virtual std::ostream& print(std::ostream& os) const
+		{
+		os<<"(Builtin::VoidP expr): void |-> #t, expr |-> #f";
+		
+		return os;
+		}
+	
+	/* Methods from class Function: */
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context)
+		{
+		/* Check the argument list: */
+		checkArity(1,arguments);
+		
+		/* Return a new Boolean with true if the first argument evaluates to the Void, false otherwise: */
+		return new Boolean(evalArg(0,arguments,context)==&Void::the);
 		}
 	};
 
@@ -902,6 +929,39 @@ class Atan2:public Function // Class to calculate the full-circle arctangent
 		}
 	};
 
+/*********************
+Side-effect functions:
+*********************/
+
+class Print:public Function // Class to evaluate and print its arguments
+	{
+	/* Methods from class Thing: */
+	public:
+	virtual std::ostream& print(std::ostream& os) const
+		{
+		os<<"(Builtin::Print expr1 ... exprn) |->";
+		
+		return os;
+		}
+	
+	/* Methods from class Function: */ \
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context)
+		{
+		/* Evaluate all arguments: */
+		std::vector<ThingPtr> values=evalArgs(arguments,context);
+		
+		/* Print all evaluation results: */
+		for(std::vector<ThingPtr>::iterator vIt=values.begin();vIt!=values.end();++vIt)
+			{
+			(*vIt)->print(std::cout);
+			std::cout<<std::endl;
+			}
+		
+		/* Return nothing: */
+		return &Void::the;
+		}
+	};
+
 void forgetMath(Context& context);
 void rememberMath(Context& context);
 
@@ -924,7 +984,8 @@ class ForgetMath:public Function // Class to make the Lambda Programming Languag
 		
 		forgetMath(context);
 		
-		return 0;
+		/* Return nothing: */
+		return &Void::the;
 		}
 	};
 
@@ -947,7 +1008,8 @@ class RememberMath:public Function // Class to make the Lambda Programming Langu
 		
 		rememberMath(context);
 		
-		return 0;
+		/* Return nothing: */
+		return &Void::the;
 		}
 	};
 
@@ -1037,6 +1099,9 @@ void defBuiltins(Context& context)
 	{
 	context.setThing("atom?",*new Builtin::AtomP);
 	
+	context.setThing("void",Void::the);
+	context.setThing("void?",*new Builtin::VoidP);
+	
 	context.setThing("null?",*new Builtin::NullP);
 	
 	context.setThing("cons?",*new Builtin::ConsP);
@@ -1063,7 +1128,7 @@ void defBuiltins(Context& context)
 	
 	context.setThing("lambda",*new Builtin::Lambda);
 	
-	#if 0
+	#if 1
 	
 	context.setThing("=",*new Builtin::Equal);
 	context.setThing("/=",*new Builtin::Unequal);
@@ -1107,6 +1172,8 @@ void defBuiltins(Context& context)
 	context.setThing("remember-math",*new Builtin::RememberMath);
 	
 	#endif
+	
+	context.setThing("print",*new Builtin::Print);
 	}
 
 }

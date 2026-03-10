@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <fcntl.h>
 #include <iostream>
 
+#include "Void.h"
 #include "Name.h"
 #include "InputStream.h"
 #include "Parser.h"
@@ -66,8 +67,17 @@ ThingPtr Load::evaluate(ThingPtr arguments,Context& context)
 		fileName.append(".lambda");
 		}
 	
+	/* Load the file: */
+	load(fileName.c_str(),context);
+	
+	/* Return nothing: */
+	return &Void::the;
+	}
+
+void Load::load(const char* fileName,Context& context)
+	{
 	/* Create an InputStream to read the file: */
-	InputStream inputStream(fileName.c_str());
+	InputStream inputStream(fileName);
 	
 	/* Parse the input stream until end-of-file: */
 	while(true)
@@ -81,9 +91,6 @@ ThingPtr Load::evaluate(ThingPtr arguments,Context& context)
 		/* Evaluate the expression and ignore the result: */
 		expression->evaluate(context);
 		}
-	
-	/* We don't return anything: */
-	return 0;
 	}
 
 }

@@ -1,3 +1,17 @@
+(def (copy n elem)
+	(if (<= n 0)
+		'()
+		(cons elem (copy (- n 1) elem))
+	)
+)
+
+(def (count from step to)
+	(if (> from to)
+		'()
+		(cons from (count (+ from step) step to))
+	)
+)
+
 (def (length list)
 	(if (null? list)
 		0
@@ -33,13 +47,6 @@
 	)
 )
 
-(def (count from step to)
-	(if (> from to)
-		'()
-		(cons from (count (+ from step) step to))
-	)
-)
-
 (def (reverse-with accum list)
 	(if (null? list)
 		accum
@@ -51,10 +58,20 @@
 	(reverse-with '() list)
 )
 
-(def (apply f list)
+(def (map f list)
 	(if (null? list)
 		'()
-		(cons (f (car list)) (apply f (cdr list)))
+		(cons (f (car list)) (map f (cdr list)))
+	)
+)
+
+(def (mapdrop f list)
+	(if (null? list)
+		void
+		(begin
+			(f (car list))
+			(mapdrop f (cdr list))
+		)
 	)
 )
 
@@ -109,6 +126,16 @@
 )
 
 (def primes (erato (count 2 1 200)))
+
+(def (repeat n exprs)
+	(if (< n 1)
+		void
+		(begin
+			(mapdrop eval exprs)
+			(repeat (- n 1) exprs)
+		)
+	)
+)
 
 (def (comp f g)
 	(lambda (a) (f (g a)))

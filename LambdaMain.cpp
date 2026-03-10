@@ -31,7 +31,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <Threads/Thread.h>
 
 #include "Context.h"
+#include "Void.h"
+#include "Load.h"
 #include "DefBuiltins.h"
+#include "DefTurtleBuiltins.h"
 #include "InputStream.h"
 #include "Parser.h"
 
@@ -58,7 +61,9 @@ void* parserThreadFunction(Lambda::InputStream* inputStream)
 			{
 			/* Parse the next expression from the input stream: */
 			inputStream->skipWs();
+			inputStream->setParsing(true);
 			Lambda::ThingPtr expression=Lambda::parse(*inputStream);
+			inputStream->setParsing(false);
 			
 			/* Bail out if the expression is null at end-of-file: */
 			if(expression==0)
@@ -67,9 +72,9 @@ void* parserThreadFunction(Lambda::InputStream* inputStream)
 			/* Evaluate the expression: */
 			Lambda::ThingPtr result=expression->evaluate(*context);
 			
-			/* Send the result to the main thread if it is not empty: */
-			if(result!=0)
-				inputStream->signalResult(*result);
+			/* Print the result if it is something other than the Void: */
+			if(result!=&Lambda::Void::the)
+				std::cout<<"= "<<*result<<std::endl;
 			}
 		catch(const std::runtime_error& err)
 			{
@@ -118,13 +123,31 @@ char** complete(const char* text,int start,int end)
 
 }
 
-int main(void)
+int main(int argc,char* argv[])
 	{
+	std::cout<<"Welcome to the Lambda Programming Language!"<<std::endl;
+	
 	/* Create an evaluation context: */
 	context=new Lambda::Context;
 	
 	/* Define the Lambda Programming Language's built-in primitives and functions: */
 	defBuiltins(*context);
+	defTurtleBuiltins(*context);
+	
+	/* Execute all scripts passed on the command line: */
+	for(int i=1;i<argc;++i)
+		{
+		try
+			{
+			/* Parse the file: */
+			std::cout<<"Loading "<<argv[i]<<std::endl;
+			Lambda::Load::load(argv[i],*context);
+			}
+		catch(const std::runtime_error& err)
+			{
+			std::cout<<"Error: "<<err.what()<<std::endl;
+			}
+		}
 	
 	/* Create a pipe to send input from stdin to the input stream: */
 	Misc::Pipe inputPipe;
@@ -143,8 +166,8 @@ int main(void)
 	Threads::Thread parserThread(parserThreadFunction,&inputStream);
 	
 	/* Wait for the first blocking signal from the parser thread: */
-	Lambda::Thing* result;
-	signalPipe.read(result);
+	char signal;
+	signalPipe.read(signal);
 	
 	/* Set up the readline library: */
 	rl_readline_name="Lambda"; // Name of this application, for per-application readline configuration
@@ -152,12 +175,12 @@ int main(void)
 	rl_attempted_completion_function=complete;
 	
 	/* Read, evaluate, and print expressions until the user closes the connection: */
-	std::cout<<"Welcome to the Lambda Programming Language!"<<std::endl;
 	std::cout<<"Press Ctrl+D at the prompt to say goodbye."<<std::endl<<std::endl;
+	bool parsing=false;
 	while(true)
 		{
 		/* Read a line of input from the readline library and check for end-of-file: */
-		char* input=readline("Lambda> ");
+		char* input=readline(parsing?"     ?> ":"Lambda> "); // Indicate whether the parser is idle or waiting for more input
 		if(input==0)
 			break;
 		
@@ -176,21 +199,10 @@ int main(void)
 		/* Release the line of input: */
 		free(input);
 		
-		/* Now read all evaluation results from the parser thread until it blocks for more input: */
-		while(true)
-			{
-			/* Read a result pointer and bail out if there are no more results: */
-			Lambda::Thing* result;
-			signalPipe.read(result);
-			if(result==0)
-				break;
-			
-			/* Print the result: */
-			std::cout<<"= "<<*result<<std::endl;
-			
-			/* Drop the reference to the result that was held by the pipe message: */
-			result->unref();
-			}
+		/* Wait for the parsing thread to have read all the input: */
+		char parserStatus;
+		signalPipe.read(parserStatus);
+		parsing=parserStatus!=0;
 		}
 	
 	/* Clean up after readline as much as possible: */

@@ -54,8 +54,8 @@ void InputStream::fillBuffer(void)
 	if((check.revents&POLLIN)==0x0&&signalFd>=0)
 		{
 		/* Tell the client that we are going to block: */
-		Thing* signal=0; // Sending a null pointer means there's nothing to send
-		if(write(signalFd,&signal,sizeof(Thing*))!=sizeof(Thing*))
+		char signal=parsing?1:0;
+		if(write(signalFd,&signal,sizeof(char))!=sizeof(char))
 			throw Error("Cannot signal blocking");
 		}
 	
@@ -137,7 +137,7 @@ void InputStream::init(void)
 	}
 
 InputStream::InputStream(int sFd)
-	:fd(sFd),buffer(0),signalFd(-1)
+	:fd(sFd),buffer(0),parsing(false),signalFd(-1)
 	{
 	/* Initialize the stream: */
 	init();
@@ -166,6 +166,11 @@ InputStream::~InputStream(void)
 void InputStream::setSignalFd(int newSignalFd)
 	{
 	signalFd=newSignalFd;
+	}
+
+void InputStream::setParsing(bool newParsing)
+	{
+	parsing=newParsing;
 	}
 
 void InputStream::signalResult(Thing& result)

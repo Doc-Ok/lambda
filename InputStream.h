@@ -54,6 +54,7 @@ class InputStream
 	char* bufPtr; // Pointer to the next unread character in the input buffer
 	int escapeChar; // Escape character for quoted and non-quoted strings; -1 if escape sequences should be ignored
 	int lastChar; // Last character read from the input file; -1 at end-of-file
+	bool parsing; // Flag if a parser reading from this input stream is currently in the middle of parsing
 	int signalFd; // Optional file descriptor on which to send notifications about stream state to a client
 	
 	/* Private methods: */
@@ -69,6 +70,7 @@ class InputStream
 	
 	/* Methods: */
 	void setSignalFd(int newSignalFd); // Sets a file descriptor on which to signal input stream and parser state
+	void setParsing(bool newParsing); // Enters or leaves parsing mode
 	void signalResult(Thing& result); // Lets a parser transmit an evaluation result to someone listening on the signal file descriptor
 	bool eof(void) const // Returns true if the input stream has been exhausted
 		{

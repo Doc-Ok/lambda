@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include <iostream>
 
+#include "Void.h"
 #include "Cons.h"
 
 namespace Lambda {
@@ -45,7 +46,7 @@ ThingPtr Begin::evaluate(ThingPtr arguments,Context& context)
 	size_t arity=getArity(arguments);
 	
 	/* Evaluate all arguments in order: */
-	ThingPtr result;
+	ThingPtr result=&Void::the;
 	Thing* argPtr=arguments.getPointer();
 	while(arity>0)
 		{
