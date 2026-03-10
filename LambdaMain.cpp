@@ -23,8 +23,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#if LAMBDA_USE_READLINE
 #include <readline/readline.h>
 #include <readline/history.h>
+#else
+#include <string>
+#endif
 #include <stdexcept>
 #include <iostream>
 #include <Misc/Pipe.h>
@@ -86,6 +90,8 @@ void* parserThreadFunction(Lambda::InputStream* inputStream)
 	return 0;
 	}
 
+#if LAMBDA_USE_READLINE
+
 /* Second-stage completion function called by the readline library: */
 char* generateMatches(const char* text,int state)
 	{
@@ -120,6 +126,8 @@ char** complete(const char* text,int start,int end)
 	/* Call readline's completion function with the second-stage completion function: */
 	return rl_completion_matches(text,generateMatches);
 	}
+
+#endif
 
 }
 
@@ -169,16 +177,22 @@ int main(int argc,char* argv[])
 	char signal;
 	signalPipe.read(signal);
 	
+	#if LAMBDA_USE_READLINE
+	
 	/* Set up the readline library: */
 	rl_readline_name="Lambda"; // Name of this application, for per-application readline configuration
 	using_history();
 	rl_attempted_completion_function=complete;
+	
+	#endif
 	
 	/* Read, evaluate, and print expressions until the user closes the connection: */
 	std::cout<<"Press Ctrl+D at the prompt to say goodbye."<<std::endl<<std::endl;
 	bool parsing=false;
 	while(true)
 		{
+		#if LAMBDA_USE_READLINE
+		
 		/* Read a line of input from the readline library and check for end-of-file: */
 		char* input=readline(parsing?"     ?> ":"Lambda> "); // Indicate whether the parser is idle or waiting for more input
 		if(input==0)
@@ -199,14 +213,38 @@ int main(int argc,char* argv[])
 		/* Release the line of input: */
 		free(input);
 		
+		#else
+		
+		/* Read a line of input from std::cin: */
+		std::cout<<(parsing?"     ?> ":"Lambda> ")<<std::flush;
+		std::string input;
+		std::getline(std::cin,input);
+		if(std::cin.eof())
+			break;
+		
+		/* Send the line of input to the parser thread: */
+		const char* iPtr=input.c_str();
+		const char* iEnd=iPtr+input.size()+1; // Send the NUL character at the end of the input string to work around the InputStream's read-ahead
+		while(iPtr!=iEnd)
+			{
+			/* Write as much of the input line as possible and advance the input pointer: */
+			iPtr+=inputPipe.write(iPtr,iEnd-iPtr);
+			}
+		
+		#endif
+		
 		/* Wait for the parsing thread to have read all the input: */
 		char parserStatus;
 		signalPipe.read(parserStatus);
 		parsing=parserStatus!=0;
 		}
 	
+	#if LAMBDA_USE_READLINE
+	
 	/* Clean up after readline as much as possible: */
 	rl_clear_history();
+	
+	#endif
 	
 	/* Say goodbye and close the write end of the input pipe, then wait for the parser thread to shut down: */
 	std::cout<<"Goodbye!"<<std::endl;
