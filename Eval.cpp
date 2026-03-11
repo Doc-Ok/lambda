@@ -32,7 +32,7 @@ Methods of class Eval:
 
 std::ostream& Eval::print(std::ostream& os) const
 	{
-	os<<"(BuiltinEval expr) |-> (eval expr)";
+	os<<"(Builtin::Eval expr) |-> (eval expr)";
 	
 	return os;
 	}

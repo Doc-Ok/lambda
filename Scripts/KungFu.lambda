@@ -1,58 +1,84 @@
-(def 0 '())
-
-(def (inc n)
-	(cons '/ n)
+(def (func expr)
+	(car expr)
 )
 
-(def 1 (inc 0))
-(def 2 (inc 1))
-(def 3 (inc 2))
-(def 4 (inc 3))
-(def 5 (inc 4))
-(def 6 (inc 5))
-(def 7 (inc 6))
-(def 8 (inc 7))
-(def 9 (inc 8))
-(def 10 (inc 9))
-
-(def (dec n)
-	(cdr n)
+(def (arg0 expr)
+	(car (cdr expr))
 )
+
+(def (z)
+	(cons 'z '())
+)
+
+(def 0 (z))
+
+(def (s n)
+	(cons 's (cons n '()))
+)
+
+(def 1 (s 0))
+(def 2 (s 1))
+(def 3 (s 2))
+(def 4 (s 3))
+(def 5 (s 4))
+(def 6 (s 5))
+(def 7 (s 6))
+(def 8 (s 7))
+(def 9 (s 8))
+(def 10 (s 9))
+
+(def (= a b)
+	(def fa (eval (func a)))
+	(def fb (eval (func b)))
+	(if (eq? fa fb)
+		(if (eq? fa s)
+			(= (arg0 a) (arg0 b))
+			#t
+		)
+		#f
+	)
+)
+
+(def (0? a)
+	(eq? (eval (func a)) z)
+)
+
+(def (p n) (arg0 n))
 
 (def (+ a b)
-	(if (null? b)
+	(if (0? b)
 		a
-		(+ (inc a) (dec b))
+		(+ (s a) (p b))
 	)
 )
 
 (def (- a b)
-	(if (null? b)
+	(if (0? b)
 		a
-		(- (dec a) (dec b))
+		(- (p a) (p b))
 	)
 )
 
 (def (* a b)
-	(if (null? b)
+	(if (0? b)
 		0
-		(+ a (* a (dec b)))
+		(+ a (* a (p b)))
 	)
 )
 
 (def (<= a b)
-	(if (null? a)
+	(if (0? a)
 		#t
-		(if (null? b)
+		(if (0? b)
 			#f
-			(<= (dec a) (dec b))
+			(<= (p a) (p b))
 		)
 	)
 )
 
 (def (/ a b)
 	(if (<= b a)
-		(inc (/ (- a b) b))
+		(s (/ (- a b) b))
 		0
 	)
 )
@@ -61,6 +87,37 @@
 	(if (<= b a)
 		(% (- a b) b)
 		a
+	)
+)
+
+(def (number->digit a)
+	(if (= a 0)
+		'0
+		(if (= a 1)
+			'1
+			(if (= a 2)
+				'2
+				(if (= a 3)
+					'3
+					(if (= a 4)
+						'4
+						(if (= a 5)
+							'5
+							(if (= a 6)
+								'6
+								(if (= a 7)
+									'7
+									(if (= a 8)
+										'8
+										'9
+									)
+								)
+							)
+						)
+					)
+				)
+			)
+		)
 	)
 )
 
@@ -76,37 +133,6 @@
 	(decimal->number-with 0 list)
 )
 
-(def (number->decimal-digit a)
-	(if (null? a)
-		'0
-		(if (null? (cdr a))
-			'1
-			(if (null? (cdr (cdr a)))
-				'2
-				(if (null? (cdr (cdr (cdr a))))
-					'3
-					(if (null? (cdr (cdr (cdr (cdr a)))))
-						'4
-						(if (null? (cdr (cdr (cdr (cdr (cdr a))))))
-							'5
-							(if (null? (cdr (cdr (cdr (cdr (cdr (cdr a)))))))
-								'6
-								(if (null? (cdr (cdr (cdr (cdr (cdr (cdr (cdr a))))))))
-									'7
-									(if (null? (cdr (cdr (cdr (cdr (cdr (cdr (cdr (cdr a)))))))))
-										'8
-										'9
-									)
-								)
-							)
-						)
-					)
-				)
-			)
-		)
-	)
-)
-
 (def (append elem list)
 	(if (null? list)
 		(cons elem '())
@@ -116,21 +142,23 @@
 
 (def (number->decimal a)
 	(if (<= 10 a)
-		(append (number->decimal-digit (% a 10)) (number->decimal (/ a 10)))
-		(cons (number->decimal-digit a) '())
+		(append (number->digit (% a 10)) (number->decimal (/ a 10)))
+		(cons (number->digit a) '())
 	)
 )
 
 (def (prettify op)
-	(lambda (a b) (number->decimal (op (decimal->number a) (decimal->number b))))
+	(lambda (a b)
+		(number->decimal (op (decimal->number a) (decimal->number b)))
+	)
 )
 
-(def ++ (prettify +))
+(def + (prettify +))
 
-(def -- (prettify -))
+(def - (prettify -))
 
-(def ** (prettify *))
+(def * (prettify *))
 
-(def // (prettify /))
+(def / (prettify /))
 
-(def %% (prettify %))
+(def % (prettify %))

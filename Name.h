@@ -50,8 +50,8 @@ class Name:public Atom
 		{
 		return classIsA();
 		}
-	virtual ThingPtr evaluate(Context& context);
 	virtual std::ostream& print(std::ostream& os) const;
+	virtual ThingPtr evaluate(Context& context);
 	
 	/* New methods: */
 	const String& getName(void) const // Returns this thing's name

@@ -35,7 +35,7 @@ Methods of class If:
 
 std::ostream& If::print(std::ostream& os) const
 	{
-	os<<"(BuiltinIf condition then else) |-> ???";
+	os<<"(Builtin::If condition then else) |-> ???";
 	
 	return os;
 	}

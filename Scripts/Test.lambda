@@ -65,6 +65,8 @@
 	(reverse-with '() list)
 )
 
+(undef reverse-with)
+
 (def (map f list)
 	(if (null? list)
 		'()
@@ -125,14 +127,14 @@
 	(filter (notmultof (car list)) (cdr list))
 )
 
+(undef notmultof)
+
 (def (erato list)
 	(if (null? list)
 		'()
 		(cons (car list) (erato (sthenes list)))
 	)
 )
-
-(def primes (erato (count 2 1 200)))
 
 (def (repeat n exprs)
 	(if (< n 1)

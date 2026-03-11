@@ -38,12 +38,6 @@ const char* Cons::classIsA(void)
 	return "a Cons";
 	}
 
-ThingPtr Cons::evaluate(Context& context)
-	{
-	/* Evaluate the car, cast the result to a Function, and evaluate that Function: */
-	return Function::evaluate(*children[0]->evaluate(context),children[1],context);
-	}
-
 std::ostream& Cons::print(std::ostream& os) const
 	{
 	os<<'(';
@@ -76,6 +70,16 @@ std::ostream& Cons::print(std::ostream& os) const
 	os<<')';
 	
 	return os;
+	}
+
+ThingPtr Cons::evaluate(Context& context)
+	{
+	#if LAMBDA_CONFIG_INSTRUMENT
+	++thingsEvaluated;
+	#endif
+	
+	/* Evaluate the car, cast the result to a Function, and evaluate that Function: */
+	return Function::evaluate(*children[0]->evaluate(context),children[1],context);
 	}
 
 bool Cons::isList(void) const

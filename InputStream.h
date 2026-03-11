@@ -24,14 +24,25 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #define INPUTSTREAM_INCLUDED
 
 #include <stddef.h>
+#include <Misc/Autopointer.h>
+#include <Threads/FunctionCalls.h>
 
 #include "Thing.h"
+
+/* Forward declarations: */
+namespace Threads {
+template <class ParameterParam>
+class FunctionCall;
+}
 
 namespace Lambda {
 
 class InputStream
 	{
 	/* Embedded classes: */
+	public:
+	typedef Threads::FunctionCall<int> BlockFunction; // Type for functions called when the input stream needs to block on a file descriptor
+	
 	private:
 	enum CharacterClasses // Enumerated type for character class bit masks to speed up tokenization
 		{
@@ -54,8 +65,7 @@ class InputStream
 	char* bufPtr; // Pointer to the next unread character in the input buffer
 	int escapeChar; // Escape character for quoted and non-quoted strings; -1 if escape sequences should be ignored
 	int lastChar; // Last character read from the input file; -1 at end-of-file
-	bool parsing; // Flag if a parser reading from this input stream is currently in the middle of parsing
-	int signalFd; // Optional file descriptor on which to send notifications about stream state to a client
+	Misc::Autopointer<BlockFunction> blockFunction; // Function called when the input stream needs to block on its input file
 	
 	/* Private methods: */
 	void fillBuffer(void); // Reads more data from the input file
@@ -69,9 +79,7 @@ class InputStream
 	~InputStream(void); // Destroys the input stream
 	
 	/* Methods: */
-	void setSignalFd(int newSignalFd); // Sets a file descriptor on which to signal input stream and parser state
-	void setParsing(bool newParsing); // Enters or leaves parsing mode
-	void signalResult(Thing& result); // Lets a parser transmit an evaluation result to someone listening on the signal file descriptor
+	void setBlockFunction(BlockFunction& newBlockFunction); // Replaces the current block function with a new one
 	bool eof(void) const // Returns true if the input stream has been exhausted
 		{
 		return lastChar<0;

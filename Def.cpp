@@ -39,7 +39,7 @@ Methods of class Def:
 
 std::ostream& Def::print(std::ostream& os) const
 	{
-	os<<"(BuiltinDef name thing) |->"<<std::endl;
+	os<<"(Builtin::Def name thing) |->"<<std::endl;
 	
 	return os;
 	}

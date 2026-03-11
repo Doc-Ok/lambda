@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include <iostream>
 
+#include "Context.h"
 #include "Void.h"
 #include "Cons.h"
 
@@ -35,7 +36,7 @@ Methods of class Begin:
 
 std::ostream& Begin::print(std::ostream& os) const
 	{
-	os<<"(BuiltinBegin expr1 ... exprn) |-> (eval exprn)";
+	os<<"(Builtin::Begin expr1 ... exprn) |-> (eval exprn)";
 	
 	return os;
 	}
@@ -44,6 +45,9 @@ ThingPtr Begin::evaluate(ThingPtr arguments,Context& context)
 	{
 	/* Check the argument list: */
 	size_t arity=getArity(arguments);
+	
+	/* Open a stack frame in the given context: */
+	Context::Frame frame(context);
 	
 	/* Evaluate all arguments in order: */
 	ThingPtr result=Void::get();

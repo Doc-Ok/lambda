@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <math.h>
 #include <iostream>
 
+#include "Config.h"
 #include "Context.h"
 #include "Function.h"
 #include "Void.h"
@@ -36,6 +37,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "Boolean.h"
 #include "If.h"
 #include "Def.h"
+#include "Undef.h"
 #include "Load.h"
 #include "Lambda.h"
 #include "Mu.h"
@@ -46,6 +48,35 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 namespace Lambda {
 
 namespace Builtin {
+
+/********************
+Functions with Thing:
+********************/
+
+class EqualP:public Function // Predicate function returning true if the arguments are the same object
+	{
+	/* Methods from class Thing: */
+	public:
+	virtual std::ostream& print(std::ostream& os) const
+		{
+		os<<"(Builtin::EqualP a b): (a a) |-> #t, expr |-> #f";
+		
+		return os;
+		}
+	
+	/* Methods from class Function: */
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context)
+		{
+		/* Check the argument list: */
+		checkArity(2,arguments);
+		
+		ThingPtr value0=evalArg(0,arguments,context);
+		ThingPtr value1=evalArg(1,arguments,context);
+		
+		/* Return true if the two first arguments evaluate to the same object, i.e., have identical pointers: */
+		return Boolean::get(value0==value1);
+		}
+	};
 
 /*******************
 Functions with Atom:
@@ -1120,6 +1151,8 @@ void rememberMath(Context& context)
 
 void defBuiltins(Context& context)
 	{
+	context.setThing("eq?",*new Builtin::EqualP);
+	
 	context.setThing("atom?",*new Builtin::AtomP);
 	
 	context.setThing("void",*Void::get());
@@ -1147,12 +1180,13 @@ void defBuiltins(Context& context)
 	
 	context.setThing("if",*new If);
 	context.setThing("def",*new Def);
+	context.setThing("undef",*new Undef);
 	context.setThing("load",*new Load);
 	
 	context.setThing("lambda",*new Builtin::Lambda);
 	context.setThing("mu",*new Builtin::Mu);
 	
-	#if 1
+	#if LAMBDA_CONFIG_KNOW_MATH
 	
 	context.setThing("=",*new Builtin::Equal);
 	context.setThing("/=",*new Builtin::Unequal);

@@ -36,18 +36,22 @@ const char* Name::classIsA(void)
 	return "a Name";
 	}
 
-ThingPtr Name::evaluate(Context& context)
-	{
-	/* A name evaluates to the thing associated with it in the given context: */
-	return &context.getThing(name);
-	}
-
 std::ostream& Name::print(std::ostream& os) const
 	{
 	/* Print this thing's name: */
 	os<<name.c_str();
 	
 	return os;
+	}
+
+ThingPtr Name::evaluate(Context& context)
+	{
+	#if LAMBDA_CONFIG_INSTRUMENT
+	++thingsEvaluated;
+	#endif
+	
+	/* A name evaluates to the thing associated with it in the given context: */
+	return &context.getThing(name);
 	}
 
 }

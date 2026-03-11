@@ -39,7 +39,7 @@ Methods of class Load:
 
 std::ostream& Load::print(std::ostream& os) const
 	{
-	os<<"(BuiltinLoad filename) |->";
+	os<<"(Builtin::Load filename) |->";
 	
 	return os;
 	}

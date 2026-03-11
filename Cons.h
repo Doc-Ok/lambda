@@ -49,8 +49,8 @@ class Cons:public Thing
 		{
 		return classIsA();
 		}
-	virtual ThingPtr evaluate(Context& context);
 	virtual std::ostream& print(std::ostream& os) const;
+	virtual ThingPtr evaluate(Context& context);
 	
 	/* New methods: */
 	Thing& car(void) // Returns the left child

@@ -1,5 +1,6 @@
 /***********************************************************************
-Thing - Base class for all objects.
+Undef - Class for a function that removes a mapping from a name to a
+thing in the current stack frame.
 Copyright (c) 2017-2026 Oliver Kreylos
 
 This file is part of the Lambda Programming Language.
@@ -19,60 +20,23 @@ with the Lambda Programming Language; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ***********************************************************************/
 
-#include "Thing.h"
+#ifndef UNDEF_INCLUDED
+#define UNDEF_INCLUDED
 
-#include <iostream>
+#include "Function.h"
 
 namespace Lambda {
 
-#if LAMBDA_CONFIG_INSTRUMENT
-
-/******************************
-Static elements of class Thing:
-******************************/
-
-size_t Thing::thingsEvaluated=0;
-size_t Thing::thingsCreated=0;
-size_t Thing::thingsDestroyed=0;
-
-#endif
-
-/**********************
-Methods of class Thing:
-**********************/
-
-const char* Thing::classIsA(void)
+class Undef:public Function
 	{
-	return "a Thing";
-	}
-
-ThingPtr Thing::evaluate(Context& context)
-	{
-	#if LAMBDA_CONFIG_INSTRUMENT
-	++thingsEvaluated;
-	#endif
+	/* Methods from class Thing: */
+	public:
+	virtual std::ostream& print(std::ostream& os) const;
 	
-	return this;
-	}
-
-#if LAMBDA_CONFIG_INSTRUMENT
-
-void Thing::resetCounters(void)
-	{
-	/* Reset the performance counters to zero: */
-	thingsEvaluated=0;
-	thingsCreated=0;
-	thingsDestroyed=0;
-	}
-
-std::ostream& Thing::printCounters(std::ostream& os)
-	{
-	/* Print the performance counters: */
-	std::cout<<"("<<thingsEvaluated<<" evaluations, (+"<<thingsCreated<<", -"<<thingsDestroyed<<", = "<<ssize_t(thingsCreated)-ssize_t(thingsDestroyed)<<" cells)";
-	
-	return os;
-	}
-
-#endif
+	/* Methods from class Function: */
+	virtual ThingPtr evaluate(ThingPtr arguments,Context& context);
+	};
 
 }
+
+#endif

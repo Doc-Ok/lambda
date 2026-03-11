@@ -59,6 +59,10 @@ class Function:public Atom
 	virtual ThingPtr evaluate(ThingPtr arguments,Context& context) =0; // Evaluates the function with the given argument(s) in the given context
 	static ThingPtr evaluate(Thing& thing,ThingPtr arguments,Context& context) // Evaluates the given thing as a function if it is a Function; throws exception otherwise
 		{
+		#if LAMBDA_CONFIG_INSTRUMENT
+		++thingsEvaluated;
+		#endif
+		
 		/* Try casting the given thing to a Function and return the result of evaluating that Function: */
 		return to<Function>(thing).evaluate(arguments,context);
 		}

@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <Threads/FunctionCalls.h>
 
 #include "Error.h"
 
@@ -43,26 +44,26 @@ void InputStream::fillBuffer(void)
 	bufferEnd=buffer;
 	bufPtr=buffer;
 	
-	/* Do a quick check to see if there is more data available on the input file: */
-	struct pollfd check;
-	memset(&check,0,sizeof(struct pollfd));
-	check.fd=fd;
-	check.events=POLLIN;
-	poll(&check,1,0);
-	
-	/* Check if we are about to block and there is a client who cares about that: */
-	if((check.revents&POLLIN)==0x0&&signalFd>=0)
-		{
-		/* Tell the client that we are going to block: */
-		char signal=parsing?1:0;
-		if(write(signalFd,&signal,sizeof(char))!=sizeof(char))
-			throw Error("Cannot signal blocking");
-		}
-	
 	/* Read data and block until something is available: */
 	bool notAtEof=true;
 	while(bufferEnd==buffer&&notAtEof)
 		{
+		/* Check if someone is interested in the input stream blocking on input: */
+		if(blockFunction!=0)
+			{
+			/* Do a quick check to see if there is more data available on the input file: */
+			struct pollfd check;
+			memset(&check,0,sizeof(struct pollfd));
+			check.fd=fd;
+			check.events=POLLIN;
+			poll(&check,1,0);
+			
+			/* If there is no data available, ask the block function to block until there is: */
+			if((check.revents&POLLIN)==0x0)
+				(*blockFunction)(fd);
+			}
+		
+		/* Attempt to read some data from the file: */
 		ssize_t readResult=read(fd,buffer,bufferSize);
 		if(readResult>0)
 			{
@@ -137,14 +138,14 @@ void InputStream::init(void)
 	}
 
 InputStream::InputStream(int sFd)
-	:fd(sFd),buffer(0),parsing(false),signalFd(-1)
+	:fd(sFd),buffer(0)
 	{
 	/* Initialize the stream: */
 	init();
 	}
 
 InputStream::InputStream(const char* fileName)
-	:fd(open(fileName,O_RDONLY)),buffer(0),signalFd(-1)
+	:fd(open(fileName,O_RDONLY)),buffer(0)
 	{
 	/* Check if the input file was opened successfully: */
 	if(fd<0)
@@ -163,27 +164,10 @@ InputStream::~InputStream(void)
 	close(fd);
 	}
 
-void InputStream::setSignalFd(int newSignalFd)
+void InputStream::setBlockFunction(InputStream::BlockFunction& newBlockFunction)
 	{
-	signalFd=newSignalFd;
-	}
-
-void InputStream::setParsing(bool newParsing)
-	{
-	parsing=newParsing;
-	}
-
-void InputStream::signalResult(Thing& result)
-	{
-	/* Bail out if noone's listening: */
-	if(signalFd<0)
-		return;
-	
-	/* Grab another reference to the thing and send its pointer on the signal file descriptor: */
-	result.ref();
-	Thing* thingPtr=&result;
-	if(write(signalFd,&thingPtr,sizeof(Thing*))!=sizeof(Thing*))
-		throw Error("Cannot signal an evaluation result");
+	/* Replace the current block function: */
+	blockFunction=&newBlockFunction;
 	}
 
 }

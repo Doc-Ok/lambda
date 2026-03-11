@@ -22,11 +22,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #ifndef THING_INCLUDED
 #define THING_INCLUDED
 
+#include <stddef.h>
 #include <string>
 #include <iosfwd>
 #include <Misc/Autopointer.h>
 #include <Threads/RefCounted.h>
 
+#include "Config.h"
 #include "Error.h"
 
 /* Forward declarations: */
@@ -43,6 +45,28 @@ typedef Misc::Autopointer<Thing> ThingPtr; // Type for pointers to Thing objects
 
 class Thing:public Threads::RefCounted
 	{
+	/* Elements: */
+	public:
+	#if LAMBDA_CONFIG_INSTRUMENT
+	static size_t thingsEvaluated; // Counter to keep track of evaluation's time use
+	static size_t thingsCreated,thingsDestroyed; // Counters to keep track of evaluation's space use
+	#endif
+	
+	/* Constructors and destructors: */
+	public:
+	Thing(void) // Default constructor
+		{
+		#if LAMBDA_CONFIG_INSTRUMENT
+		++thingsCreated;
+		#endif
+		}
+	virtual ~Thing(void) // Destructor
+		{
+		#if LAMBDA_CONFIG_INSTRUMENT
+		++thingsDestroyed;
+		#endif
+		}
+	
 	/* New methods: */
 	public:
 	static const char* classIsA(void); // Returns a string describing the type of the class, in the form "a thing"
@@ -50,8 +74,12 @@ class Thing:public Threads::RefCounted
 		{
 		return classIsA();
 		}
-	virtual ThingPtr evaluate(Context& context); // Returns the thing resulting from evaluating this thing in the given context; by default, a thing evaluates to itself
 	virtual std::ostream& print(std::ostream& os) const =0; // Prints this thing to the given output stream; returns the output stream
+	virtual ThingPtr evaluate(Context& context); // Returns the thing resulting from evaluating this thing in the given context; by default, a thing evaluates to itself
+	#if LAMBDA_CONFIG_INSTRUMENT
+	static void resetCounters(void); // Resets the performance counters before a parsing/evaluation sequence
+	static std::ostream& printCounters(std::ostream& os); // Prints the performance counters after a parsing/evaluation sequence
+	#endif
 	};
 
 /****************************

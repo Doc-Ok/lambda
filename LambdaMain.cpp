@@ -23,10 +23,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <poll.h>
 #include <stdexcept>
 #include <iostream>
+#include <Misc/Autopointer.h>
 #include <Misc/Pipe.h>
 #include <Threads/Thread.h>
+#include <Threads/FunctionCalls.h>
 
 #include "Config.h"
 #if LAMBDA_CONFIG_USE_READLINE
@@ -47,6 +50,56 @@ namespace {
 
 Lambda::Context* context=0; // The root expression evaluation context
 
+/**************
+Helper classes:
+**************/
+
+class InputStreamBlocker:public Threads::FunctionCall<int> // Function call class to manage an interactive InputStream
+	{
+	/* Elements: */
+	private:
+	Lambda::InputStream& inputStream; // Reference to the input stream
+	bool parsing; // Flag if the parser thread is currently parsing an expression
+	int signalFd; // File descriptor on which to send status messages to the main thread
+	
+	/* Constructors and destructors: */
+	public:
+	InputStreamBlocker(Lambda::InputStream& sInputStream,int sSignalFd) // Elementwise constructor
+		:inputStream(sInputStream),
+		 parsing(false),signalFd(sSignalFd)
+		{
+		/* Register this object as the blocking function with the input stream: */
+		inputStream.setBlockFunction(*this);
+		}
+	
+	/* Methods from class Threads::FunctionCall<int>: */
+	void operator()(int fd)
+		{
+		/* Signal the main thread that we are blocking, and tell it whether we need more input to finish parsing: */
+		char signal=parsing?1:0;
+		write(signalFd,&signal,sizeof(signal));
+		
+		/* Block on the input stream's file descriptor: */
+		struct pollfd pollRequest;
+		memset(&pollRequest,0,sizeof(struct pollfd));
+		pollRequest.fd=fd;
+		pollRequest.events=POLLIN;
+		poll(&pollRequest,1,-1);
+		}
+	
+	/* New methods: */
+	Lambda::InputStream& getInputStream(void) // Returns the input stream
+		{
+		return inputStream;
+		}
+	void setParsing(bool newParsing) // Sets the parsing mode flag
+		{
+		parsing=newParsing;
+		}
+	};
+
+typedef Misc::Autopointer<InputStreamBlocker> InputStreamBlockerPtr;
+
 /****************
 Helper functions:
 ****************/
@@ -58,17 +111,28 @@ std::ostream& operator<<(std::ostream& os,const Lambda::Thing& thing)
 	}
 
 /* Runs a parser and evaluator in a background thread: */
-void* parserThreadFunction(Lambda::InputStream* inputStream)
+void* parserThreadFunction(InputStreamBlocker* threadArg)
 	{
+	/* Hold a reference to the input stream blocker and retrieve the input stream reference: */
+	InputStreamBlockerPtr inputStreamBlocker(threadArg);
+	Lambda::InputStream& inputStream=inputStreamBlocker->getInputStream();
+	
 	while(true)
 		{
+		#if LAMBDA_CONFIG_INSTRUMENT
+		
+		/* Reset the evaluation counters: */
+		Lambda::Thing::resetCounters();
+		
+		#endif
+		
 		try
 			{
 			/* Parse the next expression from the input stream: */
-			inputStream->skipWs();
-			inputStream->setParsing(true);
-			Lambda::ThingPtr expression=Lambda::parse(*inputStream);
-			inputStream->setParsing(false);
+			inputStream.skipWs();
+			inputStreamBlocker->setParsing(true);
+			Lambda::ThingPtr expression=Lambda::parse(inputStream);
+			inputStreamBlocker->setParsing(false);
 			
 			/* Bail out if the expression is null at end-of-file: */
 			if(expression==0)
@@ -86,6 +150,15 @@ void* parserThreadFunction(Lambda::InputStream* inputStream)
 			/* Print an error message and continue: */
 			std::cout<<"Oopsie: "<<err.what()<<std::endl;
 			}
+		
+		#if LAMBDA_CONFIG_INSTRUMENT
+		
+		/* Print the evaluation counters: */
+		std::cout<<"  ";
+		Lambda::Thing::printCounters(std::cout);
+		std::cout<<std::endl;
+		
+		#endif
 		}
 	
 	return 0;
@@ -146,6 +219,13 @@ int main(int argc,char* argv[])
 	/* Execute all scripts passed on the command line: */
 	for(int i=1;i<argc;++i)
 		{
+		#if LAMBDA_CONFIG_INSTRUMENT
+		
+		/* Reset the evaluation counters: */
+		Lambda::Thing::resetCounters();
+		
+		#endif
+		
 		try
 			{
 			/* Parse the file: */
@@ -156,6 +236,14 @@ int main(int argc,char* argv[])
 			{
 			std::cout<<"Error: "<<err.what()<<std::endl;
 			}
+		
+		#if LAMBDA_CONFIG_INSTRUMENT
+		
+		/* Print the evaluation counters: */
+		Lambda::Thing::printCounters(std::cout);
+		std::cout<<std::endl;
+		
+		#endif
 		}
 	
 	/* Create a pipe to send input from stdin to the input stream: */
@@ -169,10 +257,12 @@ int main(int argc,char* argv[])
 	
 	/* Create a signal pipe to read results from the parser: */
 	Misc::Pipe signalPipe;
-	inputStream.setSignalFd(signalPipe.getWriteFd());
+	
+	/* Create an input stream blocker to communicate with the input stream: */
+	InputStreamBlockerPtr inputStreamBlocker=new InputStreamBlocker(inputStream,signalPipe.getWriteFd());
 	
 	/* Start a background thread to parse and evaluate expressions: */
-	Threads::Thread parserThread(parserThreadFunction,&inputStream);
+	Threads::Thread parserThread(parserThreadFunction,inputStreamBlocker.getPointer());
 	
 	/* Wait for the first blocking signal from the parser thread: */
 	char signal;

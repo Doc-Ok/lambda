@@ -45,8 +45,8 @@ class Quote:public Atom
 		{
 		return classIsA();
 		}
-	virtual ThingPtr evaluate(Context& context);
 	virtual std::ostream& print(std::ostream& os) const;
+	virtual ThingPtr evaluate(Context& context);
 	
 	/* New methods: */
 	Thing& getQuoted(void) // Returns the quoted thing

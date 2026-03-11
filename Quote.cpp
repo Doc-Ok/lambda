@@ -34,12 +34,6 @@ const char* Quote::classIsA(void)
 	return "a Quote";
 	}
 
-ThingPtr Quote::evaluate(Context& context)
-	{
-	/* A Quote evaluates to the quoted thing: */
-	return quoted;
-	}
-
 std::ostream& Quote::print(std::ostream& os) const
 	{
 	/* Print the quoted thing with a quote character in front: */
@@ -47,6 +41,16 @@ std::ostream& Quote::print(std::ostream& os) const
 	quoted->print(os);
 	
 	return os;
+	}
+
+ThingPtr Quote::evaluate(Context& context)
+	{
+	#if LAMBDA_CONFIG_INSTRUMENT
+	++thingsEvaluated;
+	#endif
+	
+	/* A Quote evaluates to the quoted thing: */
+	return quoted;
 	}
 
 }

@@ -1,5 +1,6 @@
 /***********************************************************************
-Thing - Base class for all objects.
+Undef - Class for a function that removes a mapping from a name to a
+thing in the current stack frame.
 Copyright (c) 2017-2026 Oliver Kreylos
 
 This file is part of the Lambda Programming Language.
@@ -19,60 +20,40 @@ with the Lambda Programming Language; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ***********************************************************************/
 
-#include "Thing.h"
+#include "Undef.h"
 
 #include <iostream>
 
+#include "Context.h"
+#include "Void.h"
+#include "Name.h"
+
 namespace Lambda {
 
-#if LAMBDA_CONFIG_INSTRUMENT
-
-/******************************
-Static elements of class Thing:
-******************************/
-
-size_t Thing::thingsEvaluated=0;
-size_t Thing::thingsCreated=0;
-size_t Thing::thingsDestroyed=0;
-
-#endif
-
 /**********************
-Methods of class Thing:
+Methods of class Undef:
 **********************/
 
-const char* Thing::classIsA(void)
+std::ostream& Undef::print(std::ostream& os) const
 	{
-	return "a Thing";
-	}
-
-ThingPtr Thing::evaluate(Context& context)
-	{
-	#if LAMBDA_CONFIG_INSTRUMENT
-	++thingsEvaluated;
-	#endif
-	
-	return this;
-	}
-
-#if LAMBDA_CONFIG_INSTRUMENT
-
-void Thing::resetCounters(void)
-	{
-	/* Reset the performance counters to zero: */
-	thingsEvaluated=0;
-	thingsCreated=0;
-	thingsDestroyed=0;
-	}
-
-std::ostream& Thing::printCounters(std::ostream& os)
-	{
-	/* Print the performance counters: */
-	std::cout<<"("<<thingsEvaluated<<" evaluations, (+"<<thingsCreated<<", -"<<thingsDestroyed<<", = "<<ssize_t(thingsCreated)-ssize_t(thingsDestroyed)<<" cells)";
+	os<<"(Builtin::Undef name) |->"<<std::endl;
 	
 	return os;
 	}
 
-#endif
+ThingPtr Undef::evaluate(ThingPtr arguments,Context& context)
+	{
+	/* Check the argument list: */
+	checkArity(1,arguments);
+	
+	/* Get the first argument's name: */
+	const String& name=Name::getName(getArg(0,arguments));
+	
+	/* Remove the name's mapping from the context: */
+	context.removeThing(name);
+	
+	/* Return nothing: */
+	return Void::get();
+	}
 
 }

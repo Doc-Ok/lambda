@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #ifndef CONFIG_INCLUDED
 #define CONFIG_INCLUDED
 
+#define LAMBDA_CONFIG_INSTRUMENT 1
+#define LAMBDA_CONFIG_KNOW_MATH 1
 #define LAMBDA_CONFIG_USE_READLINE 1
 #define LAMBDA_CONFIG_SHADERDIR "./share/Shaders"
 
