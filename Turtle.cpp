@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <GL/GLWindow.h>
 
 #include "Error.h"
+#include "PolylineRenderer.h"
 
 // DEBUGGING
 #include <iostream>
@@ -51,20 +52,25 @@ struct Turtle::PipeCommand
 	double parameter; // The command's parameter
 	};
 
-/***********************************
-Declaration of struct Turtle::Point:
-***********************************/
+/********************************************
+Declaration of struct Turtle::CachedPolyline:
+********************************************/
 
-struct Turtle::Point
+struct Turtle::CachedPolyline
 	{
 	/* Elements: */
 	public:
-	double x,y; // The point's x and y coordinates
+	Color color; // Polyline's color
+	Scalar lineWidth; // Polyline's line width
+	Polyline polyline; // The current version of the polyline
+	unsigned int version; // The version number of the current polyline
 	
 	/* Constructors and destructors: */
-	Point(double sX,double sY) // Constructs a point from the given coordinates
-		:x(sX),y(sY)
+	CachedPolyline(const Point& start) // Creates a polyline containing a single vertex
+		:color(0,192,0),lineWidth(1.5),
+		 version(1)
 		{
+		polyline.push_back(start);
 		}
 	};
 
@@ -76,6 +82,8 @@ void Turtle::resetTurtle(void)
 	{
 	/* Clear the display: */
 	polylines.clear();
+	if(window!=0&&polylineRenderer!=0)
+		; // polylineRenderer->clearCache(window->getContextData());
 	
 	/* Move the turtle back to its initial state: */
 	x=0.0;
@@ -85,8 +93,7 @@ void Turtle::resetTurtle(void)
 	pen=true;
 	
 	/* Start the first polyline: */
-	polylines.push_back(Polyline());
-	polylines.back().push_back(Point(x,y));
+	polylines.push_back(CachedPolyline(Point(x,y)));
 	
 	if(window!=0)
 		{
@@ -126,6 +133,14 @@ void Turtle::redrawDisplay(void)
 	glClearColor(0.0f,0.0f,0.0f,1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	
+	/* Enable alpha blending: */
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	
+	/* Activate the polyline renderer: */
+	GLObject::DataItem* polylineRendererDataItem=polylineRenderer->activate(Scalar(1.25/scale),window->getContextData());
+	polylineRenderer->setScaleFactor(Scalar(1.0/scale));
+	
 	/* Set up OpenGL matrices: */
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -136,40 +151,23 @@ void Turtle::redrawDisplay(void)
 	glScaled(scale,scale,scale);
 	
 	/* Draw all polylines: */
-	glColor3f(0.0f,0.667f,0.0f);
 	for(PolylineSet::iterator psIt=polylines.begin();psIt!=polylines.end();++psIt)
-		{
-		if(psIt->size()>1)
-			{
-			/* Draw the polyline: */
-			glBegin(GL_LINE_STRIP);
-			for(Polyline::iterator pIt=psIt->begin();pIt!=psIt->end();++pIt)
-				glVertex2d(pIt->x,pIt->y);
-			glEnd();
-			}
-		else
-			{
-			/* Draw the polyline as a point: */
-			glBegin(GL_POINTS);
-			glVertex2d(psIt->front().x,psIt->front().y);
-			glEnd();
-			}
-		}
+		polylineRenderer->draw(&*psIt,psIt->version,psIt->polyline,psIt->color,psIt->lineWidth,polylineRendererDataItem);
 	
 	/* Draw the turtle: */
 	glPushMatrix();
 	glTranslated(x,y,0.0);
 	glRotated(angleDeg,0.0,0.0,1.0);
 	
-	glLineWidth(1.0f);
-	glColor3f(1.0f,1.0f,1.0f);
-	glBegin(GL_LINE_LOOP);
-	glVertex2d(0.0,0.667);
-	glVertex2d(-0.25,-0.333);
-	glVertex2d(0.25,-0.333);
-	glEnd();
+	polylineRenderer->draw(&turtle,1,turtle,Color(255,255,255),Scalar(2.5),polylineRendererDataItem);
 	
 	glPopMatrix();
+	
+	/* Deactivate the polyline renderer: */
+	polylineRenderer->deactivate(polylineRendererDataItem);
+	
+	/* Disable alpha blending: */
+	glDisable(GL_BLEND);
 	}
 
 void Turtle::handleXEvents(int numEventsInQueue)
@@ -249,7 +247,10 @@ void Turtle::executeCommand(const Turtle::PipeCommand& command)
 			
 			/* Add to the current polyline if the pen is down: */
 			if(pen)
-				polylines.back().push_back(Point(x,y));
+				{
+				polylines.back().polyline.push_back(Point(x,y));
+				++polylines.back().version;
+				}
 			
 			/* We must update the display: */
 			mustRedraw=true;
@@ -263,7 +264,11 @@ void Turtle::executeCommand(const Turtle::PipeCommand& command)
 			
 			/* Add to the current polyline if the pen is down: */
 			if(pen)
-				polylines.back().push_back(Point(x,y));
+			if(pen)
+				{
+				polylines.back().polyline.push_back(Point(x,y));
+				++polylines.back().version;
+				}
 			
 			/* We must update the display: */
 			mustRedraw=true;
@@ -315,10 +320,7 @@ void Turtle::executeCommand(const Turtle::PipeCommand& command)
 		case PenDown:
 			/* Start a new polyline if the pen was up: */
 			if(!pen)
-				{
-				polylines.push_back(Polyline());
-				polylines.back().push_back(Point(x,y));
-				}
+				polylines.push_back(CachedPolyline(Point(x,y)));
 			
 			/* Lower the pen: */
 			pen=true;
@@ -349,11 +351,22 @@ void Turtle::init(void)
 	/* Open the display window: */
 	GLContext::Properties contextProperties;
 	contextProperties.depthBufferSize=0; // We neither need nor want a depth buffer
+	contextProperties.nonlinear=true; // Select linear rendering for best anti-aliasing quality
 	window=new GLWindow("Lambda Turtle",GLWindow::Size(1024,768),true,contextProperties);
 	
 	/* Register the close callback: */
 	window->getRectChangedCallbacks().add(this,&Turtle::windowRectChangedCallback);
 	window->getCloseCallbacks().add(this,&Turtle::windowClosedCallback);
+	
+	/* Create a polyline renderer and associate it with the display window: */
+	polylineRenderer=new PolylineRenderer;
+	polylineRenderer->initContext(window->getContextData());
+	
+	/* Create a polyline to render the turtle: */
+	turtle.push_back(Point(0.0,0.667));
+	turtle.push_back(Point(-0.25,-0.333));
+	turtle.push_back(Point(0.25,-0.333));
+	turtle.push_back(Point(0.0,0.667));
 	
 	/* Set up poll request structures to handle X events on the display window and turtle commands: */
 	memset(pollRequests,0,2*sizeof(struct pollfd));
@@ -368,10 +381,15 @@ void Turtle::init(void)
 	resetTurtle();
 	}
 
-void Turtle::deinit(void)
+void Turtle::closeWindow(void)
 	{
+	/* Destroy the polyline renderer: */
+	delete polylineRenderer;
+	polylineRenderer=0;
+	
 	/* Close the display window: */
 	delete window;
+	window=0;
 	}
 
 void* Turtle::controlThreadMethod(void)
@@ -429,9 +447,8 @@ void* Turtle::controlThreadMethod(void)
 				// DEBUGGING
 				std::cout<<"Window has been closed"<<std::endl;
 				
-				/* Destroy the window: */
-				delete window;
-				window=0;
+				/* Close the window: */
+				closeWindow();
 				
 				/* Remove the window's X connection from the poll request structures: */
 				pollRequests[0].fd=-1;
@@ -454,7 +471,7 @@ void* Turtle::controlThreadMethod(void)
 				executeCommand(commands[i]);
 				
 				/* Send a completion notification to the main thread: */
-				statusPipe.write(commands[i].sequenceNumber);
+				// statusPipe.write(commands[i].sequenceNumber);
 				}
 			
 			/* Check for end-of-file on the command pipe: */
@@ -490,7 +507,7 @@ void* Turtle::controlThreadMethod(void)
 		}
 	
 	/* De-initialize the turtle: */
-	deinit();
+	closeWindow();
 	
 	// DEBUGGING
 	std::cout<<"Shutting down turtle"<<std::endl;
@@ -500,7 +517,8 @@ void* Turtle::controlThreadMethod(void)
 
 Turtle::Turtle(void)
 	:nextSequenceNumber(1),completedSequenceNumber(0),
-	 window(0),detached(false),windowClosed(false)
+	 window(0),polylineRenderer(0),
+	 detached(false),windowClosed(false)
 	{
 	/* Start the control thread: */
 	runControlThread=true;

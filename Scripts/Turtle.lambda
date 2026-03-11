@@ -1,0 +1,41 @@
+(def (ngon n size)
+	(def a (/ 360 n))
+	(repeat n
+		(forward size)
+		(right a)
+	)
+)
+
+(def (star n size)
+	(def a (/ 360 n))
+	(repeat n
+		(forward (/ size 2))
+		(left a)
+		(forward (/ size 2))
+		(right (* a 2))
+	)
+)
+
+(def (vonKoch-side size depth)
+	(if (< depth 1)
+		(forward size)
+		(begin
+			(def s (/ size 3))
+			(def d (- depth 1))
+			(vonKoch-side s d)
+			(left 60)
+			(vonKoch-side s d)
+			(right 120)
+			(vonKoch-side s d)
+			(left 60)
+			(vonKoch-side s d)
+		)
+	)
+)
+
+(def (vonKoch size depth)
+	(repeat 3
+		(vonKoch-side size depth)
+		(right 120)
+	)
+)

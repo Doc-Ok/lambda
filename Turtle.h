@@ -27,11 +27,16 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <Misc/Pipe.h>
 #include <Threads/Thread.h>
 
+#include "Geometry.h"
+
 /* Forward declarations: */
 namespace Misc {
 class CallbackData;
 }
 class GLWindow;
+namespace Lambda {
+class PolylineRenderer;
+}
 
 namespace Lambda {
 
@@ -50,9 +55,8 @@ class Turtle
 	
 	private:
 	struct PipeCommand; // Structure to send commands to a turtle via its command pipe
-	struct Point; // Structure for 2D Cartesian points
-	typedef std::vector<Point> Polyline; // Type for polylines
-	typedef std::vector<Polyline> PolylineSet; // Type for sets of polylines
+	struct CachedPolyline; // Structure representing a polyline that is cached on the GPU
+	typedef std::vector<CachedPolyline> PolylineSet; // Type for sets of polylines that are cached on the GPU
 	
 	/* Elements: */
 	Misc::Pipe commandPipe; // A pipe to send commands to the turtle
@@ -62,12 +66,14 @@ class Turtle
 	bool runControlThread; // Flag to keep the control thread running
 	Threads::Thread controlThread; // Background thread controlling the turtle and its display
 	GLWindow* window; // The turtle's display window
+	PolylineRenderer* polylineRenderer; // A renderer for high-quality anti-aliased polylines
 	struct pollfd pollRequests[2]; // Array of poll request structures for the display window's X connection and the command pipe
 	bool mustRedraw; // Flag whether the display window must be redrawn
 	bool detached; // Flag whether the turtle has been detached from its controller
 	bool windowClosed; // Flag whether the turtle's display window has been closed
 	double x,y,angleDeg,angleRad; // Current turtle position and orientation
 	bool pen; // Current pen down state
+	Polyline turtle; // Polyline defining the turtle's graphical representation
 	PolylineSet polylines; // The set of polylines drawn by the turtle
 	double transX,transY,scale; // The current display transformation
 	bool dragging; // Flag if the display screen is currently being dragged
@@ -81,7 +87,7 @@ class Turtle
 	void handleXEvents(int numEventsInQueue); // Handles all queued-up X events on the display window
 	void executeCommand(const PipeCommand& command); // Executes the given turtle command
 	void init(void); // Initializes the turtle after construction
-	void deinit(void); // De-initializes the turtle before destruction
+	void closeWindow(void); // Closes the turtle's display window
 	void* controlThreadMethod(void); // The method controlling the turtle and its display in a background thread
 	
 	/* Constructors and destructors: */

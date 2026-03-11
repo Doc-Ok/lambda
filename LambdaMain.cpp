@@ -23,17 +23,18 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
-#if LAMBDA_USE_READLINE
-#include <readline/readline.h>
-#include <readline/history.h>
-#else
-#include <string>
-#endif
 #include <stdexcept>
 #include <iostream>
 #include <Misc/Pipe.h>
 #include <Threads/Thread.h>
 
+#include "Config.h"
+#if LAMBDA_CONFIG_USE_READLINE
+#include <readline/readline.h>
+#include <readline/history.h>
+#else
+#include <string>
+#endif
 #include "Context.h"
 #include "Void.h"
 #include "Load.h"
@@ -90,7 +91,7 @@ void* parserThreadFunction(Lambda::InputStream* inputStream)
 	return 0;
 	}
 
-#if LAMBDA_USE_READLINE
+#if LAMBDA_CONFIG_USE_READLINE
 
 /* Second-stage completion function called by the readline library: */
 char* generateMatches(const char* text,int state)
@@ -177,7 +178,7 @@ int main(int argc,char* argv[])
 	char signal;
 	signalPipe.read(signal);
 	
-	#if LAMBDA_USE_READLINE
+	#if LAMBDA_CONFIG_USE_READLINE
 	
 	/* Set up the readline library: */
 	rl_readline_name="Lambda"; // Name of this application, for per-application readline configuration
@@ -191,7 +192,7 @@ int main(int argc,char* argv[])
 	bool parsing=false;
 	while(true)
 		{
-		#if LAMBDA_USE_READLINE
+		#if LAMBDA_CONFIG_USE_READLINE
 		
 		/* Read a line of input from the readline library and check for end-of-file: */
 		char* input=readline(parsing?"     ?> ":"Lambda> "); // Indicate whether the parser is idle or waiting for more input
@@ -239,7 +240,7 @@ int main(int argc,char* argv[])
 		parsing=parserStatus!=0;
 		}
 	
-	#if LAMBDA_USE_READLINE
+	#if LAMBDA_CONFIG_USE_READLINE
 	
 	/* Clean up after readline as much as possible: */
 	rl_clear_history();

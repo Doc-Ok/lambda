@@ -66,7 +66,8 @@ READLINE_INCLUDE = -I$(READLINE_BASEDIR)/$(INCLUDEEXT)
 READLINE_LIBDIR  = -L$(READLINE_BASEDIR)/$(LIBEXT)
 READLINE_LIBS    = -lreadline
 
-PACKAGES = MYGLXSUPPORT MYGLSUPPORT MYTHREADS MYMISC GL X11
+PACKAGES = MYGLXSUPPORT MYGLSUPPORT MYMATH MYTHREADS MYMISC GL X11
+PACKAGES += READLINE
 
 ########################################################################
 # Specify all final targets
@@ -96,10 +97,6 @@ include $(VRUI_MAKEDIR)/BasicMakefile
 ########################################################################
 
 LAMBDA_SOURCES=$(wildcard *.cpp)
-
-$(LambdaMain.cpp:%.cpp=$(OBJDIR)/%.o): CFLAGS += -DLAMBDA_USE_READLINE=1
-
-$(EXEDIR)/Lambda: PACKAGES += READLINE
 
 $(EXEDIR)/Lambda: $(LAMBDA_SOURCES:%.cpp=$(OBJDIR)/%.o)
 .PHONY: Lambda
