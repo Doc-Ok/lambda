@@ -33,6 +33,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "Error.h"
 
+// DEBUGGING
+#include <iostream>
+
 namespace Lambda {
 
 /*****************************************
@@ -84,22 +87,35 @@ void Turtle::resetTurtle(void)
 	/* Start the first polyline: */
 	polylines.push_back(Polyline());
 	polylines.back().push_back(Point(x,y));
+	
+	if(window!=0)
+		{
+		/* Initialize the display transformation: */
+		transX=double(window->getWindowWidth())*0.5;
+		transY=double(window->getWindowHeight())*0.5;
+		scale=32.0;
+		dragging=false;
+		}
 	}
 
 void Turtle::windowRectChangedCallback(Misc::CallbackData* cbData)
 	{
+	GLWindow::RectChangedCallbackData* myCbData=static_cast<GLWindow::RectChangedCallbackData*>(cbData);
+	if(myCbData->isSizeChanged())
+		{
+		/* Update the current display transformation to keep the display center in the center: */
+		transX+=(double(myCbData->newRect.size[0])-double(myCbData->oldRect.size[0]))*0.5;
+		transY+=(double(myCbData->newRect.size[1])-double(myCbData->oldRect.size[1]))*0.5;
+		}
+	
 	/* We must redraw the display window: */
 	mustRedraw=true;
 	}
 
 void Turtle::windowClosedCallback(Misc::CallbackData*)
 	{
-	/* Destroy the window: */
-	delete window;
-	window=0;
-	
-	/* Remove the window's X connection from the poll request structures: */
-	pollRequests[0].fd=-1;
+	/* Mark the window as closed: */
+	windowClosed=true;
 	}
 
 void Turtle::redrawDisplay(void)
@@ -116,25 +132,11 @@ void Turtle::redrawDisplay(void)
 	glOrtho(0.0,GLdouble(size[0]),0.0,GLdouble(size[1]),-0.5,0.5);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslated(0.5*GLdouble(size[0]),0.5*GLdouble(size[1]),0.0);
-	glScaled(32.0,32.0,32.0);
-	
-	/* Draw the turtle: */
-	glPushMatrix();
-	glTranslated(x,y,0.0);
-	glRotated(angleDeg,0.0,0.0,1.0);
-	
-	glLineWidth(1.0f);
-	glColor3f(0.0f,0.5f,0.0f);
-	glBegin(GL_LINE_LOOP);
-	glVertex2d(0.0,0.667);
-	glVertex2d(-0.25,-0.333);
-	glVertex2d(0.25,-0.333);
-	glEnd();
-	
-	glPopMatrix();
+	glTranslated(transX,transY,0.0);
+	glScaled(scale,scale,scale);
 	
 	/* Draw all polylines: */
+	glColor3f(0.0f,0.667f,0.0f);
 	for(PolylineSet::iterator psIt=polylines.begin();psIt!=polylines.end();++psIt)
 		{
 		if(psIt->size()>1)
@@ -153,6 +155,21 @@ void Turtle::redrawDisplay(void)
 			glEnd();
 			}
 		}
+	
+	/* Draw the turtle: */
+	glPushMatrix();
+	glTranslated(x,y,0.0);
+	glRotated(angleDeg,0.0,0.0,1.0);
+	
+	glLineWidth(1.0f);
+	glColor3f(1.0f,1.0f,1.0f);
+	glBegin(GL_LINE_LOOP);
+	glVertex2d(0.0,0.667);
+	glVertex2d(-0.25,-0.333);
+	glVertex2d(0.25,-0.333);
+	glEnd();
+	
+	glPopMatrix();
 	}
 
 void Turtle::handleXEvents(int numEventsInQueue)
@@ -166,6 +183,48 @@ void Turtle::handleXEvents(int numEventsInQueue)
 		/* Handle it: */
 		switch(event.type)
 			{
+			case ButtonPress:
+				if(event.xbutton.button==Button1)
+					{
+					/* Start dragging: */
+					dragging=true;
+					dragX=event.xbutton.x;
+					dragY=event.xbutton.y;
+					}
+				else if(event.xbutton.button==4||event.xbutton.button==5)
+					{
+					/* Zoom in around the mouse position: */
+					double scalep=event.xbutton.button==4?scale*1.25:scale/1.25;
+					transX=(double(event.xbutton.x)*(scale-scalep)+transX*scalep)/scale;
+					transY=(double((window->getWindowHeight()-1)-event.xbutton.y)*(scale-scalep)+transY*scalep)/scale;
+					scale=scalep;
+					
+					/* We must redraw the display window: */
+					mustRedraw=true;
+					}
+				break;
+			
+			case ButtonRelease:
+				if(event.xbutton.button==Button1)
+					{
+					/* Stop dragging: */
+					dragging=false;
+					}
+				break;
+			
+			case MotionNotify:
+				if(dragging)
+					{
+					transX+=double(event.xmotion.x-dragX);
+					dragX=event.xmotion.x;
+					transY-=double(event.xmotion.y-dragY);
+					dragY=event.xmotion.y;
+					
+					/* We must redraw the display window: */
+					mustRedraw=true;
+					}
+				break;
+			
 			case Expose:
 				/* We must redraw the display window: */
 				mustRedraw=true;
@@ -279,7 +338,8 @@ void Turtle::executeCommand(const Turtle::PipeCommand& command)
 			break;
 		
 		case NumCommands:
-			// break out...
+			/* Shut down: */
+			runControlThread=false;
 			break;
 		}
 	}
@@ -292,6 +352,7 @@ void Turtle::init(void)
 	window=new GLWindow("Lambda Turtle",GLWindow::Size(1024,768),true,contextProperties);
 	
 	/* Register the close callback: */
+	window->getRectChangedCallbacks().add(this,&Turtle::windowRectChangedCallback);
 	window->getCloseCallbacks().add(this,&Turtle::windowClosedCallback);
 	
 	/* Set up poll request structures to handle X events on the display window and turtle commands: */
@@ -337,7 +398,7 @@ void* Turtle::controlThreadMethod(void)
 	Display* dpy=window->getContext().getDisplay();
 	
 	/* Loop until shut down: */
-	while(true)
+	while(runControlThread)
 		{
 		/* Set up the call to poll(): */
 		int pollTimeout=-1; // Assume we are going to block forever
@@ -358,10 +419,31 @@ void* Turtle::controlThreadMethod(void)
 		
 		/* Handle all X events that either were in the queue before we polled, or can be read from the display connection after we polled (we can't handle both at the same time): */
 		if(numEventsInQueue>0||(pollRequests[0].revents&POLLIN)!=0x0)
+			{
+			/* Handle all queued-up X events: */
 			handleXEvents(XEventsQueued(dpy,QueuedAfterReading));
+			
+			/* Check if the window was closed: */
+			if(windowClosed)
+				{
+				// DEBUGGING
+				std::cout<<"Window has been closed"<<std::endl;
+				
+				/* Destroy the window: */
+				delete window;
+				window=0;
+				
+				/* Remove the window's X connection from the poll request structures: */
+				pollRequests[0].fd=-1;
+				pollRequests[0].revents=0x0;
+				
+				/* Stop the thread if the turtle is already detached: */
+				runControlThread=runControlThread&&!detached;
+				}
+			}
 		
 		/* Handle all turtle commands from the command pipe: */
-		if((pollRequests[1].revents&POLLIN)!=0x0)
+		if(pollRequests[1].revents!=0x0)
 			{
 			/* Read a batch of commands and execute them: */
 			PipeCommand commands[512/sizeof(PipeCommand)];
@@ -373,6 +455,23 @@ void* Turtle::controlThreadMethod(void)
 				
 				/* Send a completion notification to the main thread: */
 				statusPipe.write(commands[i].sequenceNumber);
+				}
+			
+			/* Check for end-of-file on the command pipe: */
+			if(commandPipe.eof())
+				{
+				/* The turtle is now detached: */
+				detached=true;
+				
+				// DEBUGGING
+				std::cout<<"Turtle has been detached"<<std::endl;
+				
+				/* Remove the command pipe from the poll request structures: */
+				pollRequests[1].fd=-1;
+				pollRequests[1].revents=0x0;
+				
+				/* Stop the thread if the display window is already closed: */
+				runControlThread=runControlThread&&!windowClosed;
 				}
 			}
 		
@@ -393,14 +492,18 @@ void* Turtle::controlThreadMethod(void)
 	/* De-initialize the turtle: */
 	deinit();
 	
+	// DEBUGGING
+	std::cout<<"Shutting down turtle"<<std::endl;
+	
 	return 0;
 	}
 
 Turtle::Turtle(void)
 	:nextSequenceNumber(1),completedSequenceNumber(0),
-	 window(0),detached(false)
+	 window(0),detached(false),windowClosed(false)
 	{
 	/* Start the control thread: */
+	runControlThread=true;
 	controlThread.start(this,&Turtle::controlThreadMethod);
 	
 	/* Wait for confirmation from the control thread: */
@@ -422,6 +525,9 @@ Turtle::~Turtle(void)
 	
 	/* Wait for the control thread to shut down: */
 	controlThread.join();
+	
+	// DEBUGGING
+	std::cout<<"Turtle destroyed"<<std::endl;
 	}
 
 unsigned int Turtle::sendCommand(int command,double parameter)
@@ -459,9 +565,21 @@ void Turtle::waitForCompletion(unsigned int sequenceNumber)
 
 void Turtle::detach(void)
 	{
-	/* Close the write end of the command pipe and the read end of the status pipe: */
-	commandPipe.closeWrite();
-	statusPipe.closeRead();
+	// DEBUGGING
+	std::cout<<"Detaching turtle"<<std::endl;
+	
+	/* Check if the turtle's display window has already been closed: */
+	if(windowClosed)
+		{
+		/* Destroy the turtle: */
+		delete this;
+		}
+	else
+		{
+		/* Close the write end of the command pipe and the read end of the status pipe: */
+		commandPipe.closeWrite();
+		statusPipe.closeRead();
+		}
 	}
 
 }

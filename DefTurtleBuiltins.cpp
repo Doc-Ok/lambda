@@ -299,4 +299,12 @@ void defTurtleBuiltins(Context& context)
 	context.setThing("reset",*new Builtin::Reset);
 	}
 
+void destroyTurtle(void)
+	{
+	/* If there is an active turtle, shut it down: */
+	if(Builtin::activeTurtle!=0)
+		delete Builtin::activeTurtle;
+	Builtin::activeTurtle=0;
+	}
+
 }

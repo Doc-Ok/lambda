@@ -59,14 +59,19 @@ class Turtle
 	unsigned int nextSequenceNumber; // The sequence number to assign to the next turtle command
 	unsigned int completedSequenceNumber; // The sequence number of the most recently completed turtle command
 	Misc::Pipe statusPipe; // A pipe to receive status updates from the turtle
+	bool runControlThread; // Flag to keep the control thread running
 	Threads::Thread controlThread; // Background thread controlling the turtle and its display
 	GLWindow* window; // The turtle's display window
 	struct pollfd pollRequests[2]; // Array of poll request structures for the display window's X connection and the command pipe
 	bool mustRedraw; // Flag whether the display window must be redrawn
 	bool detached; // Flag whether the turtle has been detached from its controller
+	bool windowClosed; // Flag whether the turtle's display window has been closed
 	double x,y,angleDeg,angleRad; // Current turtle position and orientation
 	bool pen; // Current pen down state
 	PolylineSet polylines; // The set of polylines drawn by the turtle
+	double transX,transY,scale; // The current display transformation
+	bool dragging; // Flag if the display screen is currently being dragged
+	int dragX,dragY; // Window position at which the dragging operation started
 	
 	/* Private methods: */
 	void resetTurtle(void);

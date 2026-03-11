@@ -139,8 +139,8 @@ int main(int argc,char* argv[])
 	context=new Lambda::Context;
 	
 	/* Define the Lambda Programming Language's built-in primitives and functions: */
-	defBuiltins(*context);
-	defTurtleBuiltins(*context);
+	Lambda::defBuiltins(*context);
+	Lambda::defTurtleBuiltins(*context);
 	
 	/* Execute all scripts passed on the command line: */
 	for(int i=1;i<argc;++i)
@@ -250,6 +250,9 @@ int main(int argc,char* argv[])
 	std::cout<<"Goodbye!"<<std::endl;
 	inputPipe.closeWrite();
 	parserThread.join();
+	
+	/* If there is an active turtle, destroy it: */
+	Lambda::destroyTurtle();
 	
 	/* Destroy the evaluation context: */
 	delete context;

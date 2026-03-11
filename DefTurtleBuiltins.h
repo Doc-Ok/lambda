@@ -31,6 +31,7 @@ class Context;
 namespace Lambda {
 
 void defTurtleBuiltins(Context& context); // Defines the Lambda Programming Language's built-in turtle control functions in the given evaluation context
+void destroyTurtle(void); // Destroys any active turtle
 
 }
 
