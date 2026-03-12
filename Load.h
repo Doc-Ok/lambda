@@ -25,10 +25,19 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "Function.h"
 
+/* Forward declarations: */
+namespace Lambda {
+class FileLoader;
+}
+
 namespace Lambda {
 
 class Load:public Function
 	{
+	/* Elements: */
+	private:
+	static FileLoader* fileLoader; // Pointer to a class to load Lambda Programming Language files
+	
 	/* Methods from class Thing: */
 	public:
 	virtual std::ostream& print(std::ostream& os) const;
@@ -37,7 +46,7 @@ class Load:public Function
 	ThingPtr evaluate(ThingPtr arguments,Context& context);
 	
 	/* New methods: */
-	static void load(const char* fileName,Context& context); // Loads the given file inside the given context
+	static void setFileLoader(FileLoader* newFileLoader); // Sets the given file loader
 	};
 
 }

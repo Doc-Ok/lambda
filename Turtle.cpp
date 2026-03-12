@@ -138,7 +138,7 @@ void Turtle::redrawDisplay(void)
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	
 	/* Activate the polyline renderer: */
-	GLObject::DataItem* polylineRendererDataItem=polylineRenderer->activate(Scalar(1.25/scale),window->getContextData());
+	GLObject::DataItem* polylineRendererDataItem=polylineRenderer->activate(Scalar(1.0/scale),window->getContextData());
 	polylineRenderer->setScaleFactor(Scalar(1.0/scale));
 	
 	/* Set up OpenGL matrices: */

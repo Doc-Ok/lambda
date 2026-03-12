@@ -43,12 +43,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "Load.h"
 #include "DefBuiltins.h"
 #include "DefTurtleBuiltins.h"
+#include "FileLoader.h"
 #include "InputStream.h"
 #include "Parser.h"
 
 namespace {
 
 Lambda::Context* context=0; // The root expression evaluation context
+Lambda::FileLoader* fileLoader=0; // A loader for Lambda Programming Language files
 
 /**************
 Helper classes:
@@ -79,12 +81,8 @@ class InputStreamBlocker:public Threads::FunctionCall<int> // Function call clas
 		char signal=parsing?1:0;
 		write(signalFd,&signal,sizeof(signal));
 		
-		/* Block on the input stream's file descriptor: */
-		struct pollfd pollRequest;
-		memset(&pollRequest,0,sizeof(struct pollfd));
-		pollRequest.fd=fd;
-		pollRequest.events=POLLIN;
-		poll(&pollRequest,1,-1);
+		/* Let the file loader block on the input stream's file descriptor: */
+		fileLoader->block(fd);
 		}
 	
 	/* New methods: */
@@ -209,42 +207,18 @@ int main(int argc,char* argv[])
 	{
 	std::cout<<"Welcome to the Lambda Programming Language!"<<std::endl;
 	
-	/* Create an evaluation context: */
+	/* Create an evaluation context and a file loader: */
 	context=new Lambda::Context;
+	fileLoader=new Lambda::FileLoader(*context);
+	Lambda::Load::setFileLoader(fileLoader);
 	
 	/* Define the Lambda Programming Language's built-in primitives and functions: */
 	Lambda::defBuiltins(*context);
 	Lambda::defTurtleBuiltins(*context);
 	
-	/* Execute all scripts passed on the command line: */
+	/* Load all Lambda Programming Language files passed on the command line: */
 	for(int i=1;i<argc;++i)
-		{
-		#if LAMBDA_CONFIG_INSTRUMENT
-		
-		/* Reset the evaluation counters: */
-		Lambda::Thing::resetCounters();
-		
-		#endif
-		
-		try
-			{
-			/* Parse the file: */
-			std::cout<<"Loading "<<argv[i]<<std::endl;
-			Lambda::Load::load(argv[i],*context);
-			}
-		catch(const std::runtime_error& err)
-			{
-			std::cout<<"Error: "<<err.what()<<std::endl;
-			}
-		
-		#if LAMBDA_CONFIG_INSTRUMENT
-		
-		/* Print the evaluation counters: */
-		Lambda::Thing::printCounters(std::cout);
-		std::cout<<std::endl;
-		
-		#endif
-		}
+		fileLoader->loadFile(argv[i]);
 	
 	/* Create a pipe to send input from stdin to the input stream: */
 	Misc::Pipe inputPipe;
@@ -345,7 +319,8 @@ int main(int argc,char* argv[])
 	/* If there is an active turtle, destroy it: */
 	Lambda::destroyTurtle();
 	
-	/* Destroy the evaluation context: */
+	/* Destroy the file loader and evaluation context: */
+	delete fileLoader;
 	delete context;
 	
 	return 0;

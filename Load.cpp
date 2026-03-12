@@ -22,16 +22,19 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include "Load.h"
 
-#include <unistd.h>
-#include <fcntl.h>
 #include <iostream>
 
 #include "Void.h"
 #include "Name.h"
-#include "InputStream.h"
-#include "Parser.h"
+#include "FileLoader.h"
 
 namespace Lambda {
+
+/*****************************
+Static elements of class Load:
+*****************************/
+
+FileLoader* Load::fileLoader=0;
 
 /*********************
 Methods of class Load:
@@ -52,45 +55,16 @@ ThingPtr Load::evaluate(ThingPtr arguments,Context& context)
 	/* Get the first argument: */
 	std::string fileName(Name::getName(getArg(0,arguments)).c_str());
 	
-	/* Check if the file name has an extension: */
-	std::string::iterator extIt=fileName.end();
-	for(std::string::iterator fnIt=fileName.begin();fnIt!=fileName.end();++fnIt)
-		{
-		if(*fnIt=='.')
-			extIt=fnIt;
-		else if(*fnIt=='/')
-			extIt=fileName.end();
-		}
-	if(extIt==fileName.end())
-		{
-		/* Append the .lambda extension to the file name: */
-		fileName.append(".lambda");
-		}
-	
-	/* Load the file: */
-	load(fileName.c_str(),context);
+	/* Load the file via the file loader: */
+	fileLoader->loadFile(fileName.c_str(),context);
 	
 	/* Return nothing: */
 	return Void::get();
 	}
 
-void Load::load(const char* fileName,Context& context)
+void Load::setFileLoader(FileLoader* newFileLoader)
 	{
-	/* Create an InputStream to read the file: */
-	InputStream inputStream(fileName);
-	
-	/* Parse the input stream until end-of-file: */
-	while(true)
-		{
-		/* Parse an expression from the input stream and bail out if the expression is null at end-of-file: */
-		inputStream.skipWs();
-		ThingPtr expression=parse(inputStream);
-		if(expression==0)
-			break;
-		
-		/* Evaluate the expression and ignore the result: */
-		expression->evaluate(context);
-		}
+	fileLoader=newFileLoader;
 	}
 
 }
