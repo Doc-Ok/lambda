@@ -136,15 +136,7 @@
 	)
 )
 
-(def (repeat n exprs)
-	(if (< n 1)
-		void
-		(begin
-			(mapdrop eval exprs)
-			(repeat (- n 1) exprs)
-		)
-	)
-)
+(undef sthenes)
 
 (def (comp f g)
 	(lambda (a) (f (g a)))
@@ -177,3 +169,5 @@
 		(repeat-eval list)
 	)
 )
+
+(undef repeat-eval)

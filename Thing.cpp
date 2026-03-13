@@ -57,18 +57,15 @@ ThingPtr Thing::evaluate(Context& context)
 
 #if LAMBDA_CONFIG_INSTRUMENT
 
-void Thing::resetCounters(void)
+std::ostream& Thing::printCounters(std::ostream& os)
 	{
+	/* Print the performance counters: */
+	std::cout<<"("<<thingsEvaluated<<" evaluations, +"<<thingsCreated<<", -"<<thingsDestroyed<<", = "<<ssize_t(thingsCreated)-ssize_t(thingsDestroyed)<<" cells)";
+	
 	/* Reset the performance counters to zero: */
 	thingsEvaluated=0;
 	thingsCreated=0;
 	thingsDestroyed=0;
-	}
-
-std::ostream& Thing::printCounters(std::ostream& os)
-	{
-	/* Print the performance counters: */
-	std::cout<<"("<<thingsEvaluated<<" evaluations, (+"<<thingsCreated<<", -"<<thingsDestroyed<<", = "<<ssize_t(thingsCreated)-ssize_t(thingsDestroyed)<<" cells)";
 	
 	return os;
 	}

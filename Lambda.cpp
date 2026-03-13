@@ -130,7 +130,12 @@ void Lambda::setName(const String& newName)
 	{
 	/* Only take the given name if no name has been assigned yet: */
 	if(!name.valid())
+		{
 		name=newName;
+		
+		/* If the given name is already defined in the closure, remove it there: */
+		closure->removeThing(name);
+		}
 	}
 
 }

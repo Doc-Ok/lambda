@@ -86,7 +86,10 @@ ThingPtr Def::evaluate(ThingPtr arguments,Context& context)
 		/* Get the function body expressions: */
 		Thing* funcBody=&args->cdr();
 		
-		/* Map the new lambda expression to the name: */
+		/* Remove the current definition of the name: */
+		context.removeThing(name);
+		
+		/* Map a new lambda expression to the name: */
 		Misc::Autopointer<Lambda> lambda=new Lambda(new Cons(*funcArgNames,*funcBody),context);
 		context.setThing(name,*lambda);
 		

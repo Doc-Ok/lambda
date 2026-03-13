@@ -82,7 +82,7 @@ class InputStreamBlocker:public Threads::FunctionCall<int> // Function call clas
 		write(signalFd,&signal,sizeof(signal));
 		
 		/* Let the file loader block on the input stream's file descriptor: */
-		fileLoader->block(fd);
+		fileLoader->block(fd,parsing?"     ?> ":"Lambda> ");
 		}
 	
 	/* New methods: */
@@ -117,13 +117,6 @@ void* parserThreadFunction(InputStreamBlocker* threadArg)
 	
 	while(true)
 		{
-		#if LAMBDA_CONFIG_INSTRUMENT
-		
-		/* Reset the evaluation counters: */
-		Lambda::Thing::resetCounters();
-		
-		#endif
-		
 		try
 			{
 			/* Parse the next expression from the input stream: */
@@ -213,8 +206,17 @@ int main(int argc,char* argv[])
 	Lambda::Load::setFileLoader(fileLoader);
 	
 	/* Define the Lambda Programming Language's built-in primitives and functions: */
+	std::cout<<"Loading built-ins"<<std::endl;
 	Lambda::defBuiltins(*context);
 	Lambda::defTurtleBuiltins(*context);
+	
+	#if LAMBDA_CONFIG_INSTRUMENT
+	
+	/* Print the evaluation counters: */
+	Lambda::Thing::printCounters(std::cout);
+	std::cout<<std::endl;
+	
+	#endif
 	
 	/* Load all Lambda Programming Language files passed on the command line: */
 	for(int i=1;i<argc;++i)
@@ -322,6 +324,14 @@ int main(int argc,char* argv[])
 	/* Destroy the file loader and evaluation context: */
 	delete fileLoader;
 	delete context;
+	
+	#if LAMBDA_CONFIG_INSTRUMENT
+	
+	/* Print the evaluation counters: */
+	Lambda::Thing::printCounters(std::cout);
+	std::cout<<std::endl;
+	
+	#endif
 	
 	return 0;
 	}

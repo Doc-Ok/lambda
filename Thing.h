@@ -77,7 +77,6 @@ class Thing:public Threads::RefCounted
 	virtual std::ostream& print(std::ostream& os) const =0; // Prints this thing to the given output stream; returns the output stream
 	virtual ThingPtr evaluate(Context& context); // Returns the thing resulting from evaluating this thing in the given context; by default, a thing evaluates to itself
 	#if LAMBDA_CONFIG_INSTRUMENT
-	static void resetCounters(void); // Resets the performance counters before a parsing/evaluation sequence
 	static std::ostream& printCounters(std::ostream& os); // Prints the performance counters after a parsing/evaluation sequence
 	#endif
 	};

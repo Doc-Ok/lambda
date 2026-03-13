@@ -35,23 +35,28 @@ namespace Lambda {
 
 class FileLoader
 	{
-	/* Elements: */
+	/* Embedded classes: */
 	private:
+	class ReloadCallback; // Functor class called when an event occurs on a monitored file or directory
+	friend class ReloadCallback;
+	
+	/* Elements: */
 	Context& rootContext; // The root evaluation context; only files loaded in this context are monitored for changes
 	IO::DirectoryPtr currentDirectory; // The current directory at the time the file loader was created
 	IO::FileMonitor fileMonitor; // A monitor to keep track of changes to loaded files
+	const char* reloadPrompt; // The current reload prompt to be printed after reloading a file
 	
 	/* Private methods: */
-	void load(const std::string& path,Context& context); // Loads, parses, and evaluates a Lambda Programming Language file in the given evaluation context
-	std::string normalizeFileName(const char* fileName); // Returns the normalized absolute path to a Lambda Programming Language file of the given base name
-	void reloadCallback(IO::FileMonitor::Event& event); // Callback called when a previously loaded file is changed asynchronously
+	static void load(const std::string& path,Context& context); // Loads, parses, and evaluates a Lambda Programming Language file in the given evaluation context
+	std::string normalizeFileName(const char* fileName) const; // Returns the normalized absolute path to a Lambda Programming Language file of the given base name
+	void monitorFile(const std::string& path); // Monitors the file at the given normalized absolute path for changes
 	
 	/* Constructors and destructors: */
 	public:
 	FileLoader(Context& sRootContext); // Creates a file loader for the current directory and the given root evaluation context
 	
 	/* Methods: */
-	void block(int blockFd); // Blocks until data becomes available of the given file descriptor; reloads changed files in the meantime
+	void block(int blockFd,const char* newReloadPrompt); // Blocks until data becomes available of the given file descriptor; reloads changed files in the meantime, and prints the reload prompt after doing so
 	void loadFile(const char* fileName); // Loads the file of the given absolute or relative path in the root context
 	void loadFile(const char* fileName,Context& context); // Loads the file of the given absolute or relative path in the given context, due to an evaluation of Builtin::Load
 	};
