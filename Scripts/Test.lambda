@@ -169,5 +169,3 @@
 		(repeat-eval list)
 	)
 )
-
-(undef repeat-eval)
