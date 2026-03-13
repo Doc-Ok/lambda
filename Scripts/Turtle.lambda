@@ -39,3 +39,28 @@
 		(right 120)
 	)
 )
+
+(def (Hilbert lr size depth conn)
+	(if (= lr 0)
+		(if (< depth 1)
+			(begin
+				(forward size) (left 90) (forward size) (left 90) (forward size)
+			)
+			(begin
+				(def s (/ size 2))
+				(def d (- depth 1))
+				(left 90) (Hilbert 1 s d conn) (left 90) (forward conn) (Hilbert 0 s d conn) (right 90) (forward conn) (right 90) (Hilbert 0 s d conn) (forward conn) (left 90) (Hilbert 1 s d conn) (left 90)
+			)
+		)
+		(if (< depth 1)
+			(begin
+				(forward size) (right 90) (forward size) (right 90) (forward size)
+			)
+			(begin
+				(def s (/ size 2))
+				(def d (- depth 1))
+				(right 90) (Hilbert 0 s d conn) (right 90) (forward conn) (Hilbert 1 s d conn) (left 90) (forward conn) (left 90) (Hilbert 1 s d conn) (forward conn) (right 90) (Hilbert 0 s d conn) (right 90)
+			)
+		)
+	)
+)
