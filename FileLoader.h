@@ -23,6 +23,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #ifndef FILELOADER_INCLUDED
 #define FILELOADER_INCLUDED
 
+#include <string>
+#include <Misc/Autopointer.h>
+#include <Misc/StringHashFunctions.h>
+#include <Misc/HashTable.h>
+#include <Threads/FunctionCalls.h>
 #include <IO/Directory.h>
 #include <IO/FileMonitor.h>
 
@@ -37,13 +42,39 @@ class FileLoader
 	{
 	/* Embedded classes: */
 	private:
-	class ReloadCallback; // Functor class called when an event occurs on a monitored file or directory
+	class ReloadCallback:public Threads::FunctionCall<IO::FileMonitor::Event&> // Functor class called when an event occurs on a monitored file or directory
+		{
+		/* Embedded classes: */
+		private:
+		typedef Misc::HashTable<std::string,bool> MonitoredFileHashTable; // Type for hash tables mapping the names of monitored files to their monitoring states
+		
+		/* Elements: */
+		private:
+		Context& context; // The evaluation context in which the monitored file will be reloaded
+		const char*& reloadPrompt; // Reference to the file loader's current reload prompt
+		MonitoredFileHashTable monitoredFileMap; // Hash table mapping the names of monitored files to their monitoring states
+		
+		/* Constructors and destructors: */
+		public:
+		ReloadCallback(Context& sContext,const char*& sReloadPrompt); // Elementwise constructor
+		
+		/* Methods from class Threads::FunctionCall<IO::FileMonitor::Event& event>: */
+		virtual void operator()(IO::FileMonitor::Event& event); // Method called when an event occurs on the monitored file
+		
+		/* New methods: */
+		void monitorFile(const std::string& fileName); // Starts monitoring the file of the given name inside the monitored directory
+		};
+	
 	friend class ReloadCallback;
+	
+	typedef Misc::Autopointer<ReloadCallback> ReloadCallbackPtr;
+	typedef Misc::HashTable<std::string,ReloadCallbackPtr> ReloadHashTable; // Type for hash tables mapping absolute directory paths to the ReloadCallback objects monitoring them
 	
 	/* Elements: */
 	Context& rootContext; // The root evaluation context; only files loaded in this context are monitored for changes
 	IO::DirectoryPtr currentDirectory; // The current directory at the time the file loader was created
 	IO::FileMonitor fileMonitor; // A monitor to keep track of changes to loaded files
+	ReloadHashTable directoryMap; // Hash table mapping absolute directory paths to the ReloadCallback objects monitoring them
 	const char* reloadPrompt; // The current reload prompt to be printed after reloading a file
 	
 	/* Private methods: */

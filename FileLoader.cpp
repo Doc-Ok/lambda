@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <string.h>
 #include <poll.h>
 #include <iostream>
-#include <Threads/FunctionCalls.h>
 
 #include "Config.h"
 #include "Context.h"
@@ -35,84 +34,80 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 namespace Lambda {
 
-/***********************************************
-Declaration of class FileLoader::ReloadCallback:
-***********************************************/
+/*******************************************
+Methods of class FileLoader::ReloadCallback:
+*******************************************/
 
-class FileLoader::ReloadCallback:public Threads::FunctionCall<IO::FileMonitor::Event&>
+FileLoader::ReloadCallback::ReloadCallback(Context& sContext,const char*& sReloadPrompt)
+	:context(sContext),reloadPrompt(sReloadPrompt),
+	 monitoredFileMap(17)
 	{
-	/* Elements: */
-	private:
-	Context& context; // The evaluation context in which the monitored file will be reloaded
-	const char*& reloadPrompt; // Reference to the file loader's current reload prompt
-	std::string fileName; // The name of the monitored file inside its parent directory
-	bool modified; // Flag if the monitored file has been modified since the last time it was reloaded
-	
-	/* Constructors and destructors: */
-	public:
-	ReloadCallback(Context& sContext,const char*& sReloadPrompt,const std::string& sFileName) // Elementwise constructor
-		:context(sContext),reloadPrompt(sReloadPrompt),
-		 fileName(sFileName),modified(false)
-		{
-		}
-	
-	/* Methods from class Threads::FunctionCall<IO::FileMonitor::Event& event>: */
-	virtual void operator()(IO::FileMonitor::Event& event) // Method called when an event occurs on the monitored file
-		{
-		/* Bail out if the event does not apply to the monitored file: */
-		if(event.name==0||fileName!=event.name)
-			return;
+	}
 		
-		#if 0
-		// DEBUGGING
-		std::cout<<"Received an event from directory "<<event.fileMonitor.getWatchedPath(event.cookie);
-		if(event.name!=0)
-			std::cout<<" for file "<<event.name;
-		std::cout<<" with event mask "<<event.eventMask<<std::endl;
+void FileLoader::ReloadCallback::operator()(IO::FileMonitor::Event& event)
+	{
+	/* Find the name of the event's file in the monitored file map: */
+	if(event.name==0)
+		return;
+	MonitoredFileHashTable::Iterator mfmIt=monitoredFileMap.findEntry(event.name);
+	if(mfmIt.isFinished())
+		return;
+	
+	#if 0
+	// DEBUGGING
+	std::cout<<"Received an event from directory "<<event.fileMonitor.getWatchedPath(event.cookie);
+	if(event.name!=0)
+		std::cout<<" for file "<<event.name;
+	std::cout<<" with event mask "<<event.eventMask<<std::endl;
+	#endif
+	
+	/* Remember if the monitored file was modified: */
+	if((event.eventMask&IO::FileMonitor::Modified)!=0x0U)
+		mfmIt->getDest()=true;
+	
+	/* Check if it's time to reload the file: */
+	if((event.eventMask&IO::FileMonitor::MovedTo)!=0x0U||(mfmIt->getDest()&&(event.eventMask&IO::FileMonitor::ClosedWrite)!=0x0U))
+		{
+		/* Construct the absolute file name of the monitored file: */
+		std::string path=event.fileMonitor.getWatchedPath(event.cookie);
+		path+=mfmIt->getSource();
+		
+		/* Start a new line: */
+		std::cout<<std::endl;
+		
+		try
+			{
+			/* Load the file in the root context: */
+			std::cout<<"Reloading file "<<path<<std::endl;
+			load(path,context);
+			}
+		catch(const std::runtime_error& err)
+			{
+			std::cout<<"Error: "<<err.what()<<std::endl;
+			}
+		
+		#if LAMBDA_CONFIG_INSTRUMENT
+		
+		/* Print the evaluation counters: */
+		Thing::printCounters(std::cout);
+		std::cout<<std::endl;
+		
 		#endif
 		
-		/* Remember if the monitored file was modified: */
-		if((event.eventMask&IO::FileMonitor::Modified)!=0x0U)
-			modified=true;
+		/* Print the current reload prompt: */
+		if(reloadPrompt!=0)
+			std::cout<<reloadPrompt<<std::flush;
 		
-		/* Check if it's time to reload the file: */
-		if((event.eventMask&IO::FileMonitor::MovedTo)!=0x0U||(modified&&(event.eventMask&IO::FileMonitor::ClosedWrite)!=0x0U))
-			{
-			/* Construct the absolute file name of the monitored file: */
-			std::string path=event.fileMonitor.getWatchedPath(event.cookie);
-			path+=fileName;
-			
-			/* Start a new line: */
-			std::cout<<std::endl;
-			
-			try
-				{
-				/* Load the file in the root context: */
-				std::cout<<"Reloading file "<<path<<std::endl;
-				load(path,context);
-				}
-			catch(const std::runtime_error& err)
-				{
-				std::cout<<"Error: "<<err.what()<<std::endl;
-				}
-			
-			#if LAMBDA_CONFIG_INSTRUMENT
-			
-			/* Print the evaluation counters: */
-			Thing::printCounters(std::cout);
-			std::cout<<std::endl;
-			
-			#endif
-			
-			/* Print the current reload prompt: */
-			if(reloadPrompt!=0)
-				std::cout<<reloadPrompt<<std::flush;
-			
-			/* Mark the monitored file as no longer modified: */
-			modified=false;
-			}
+		/* Mark the monitored file as no longer modified: */
+		mfmIt->getDest()=false;
 		}
-	};
+	}
+
+void FileLoader::ReloadCallback::monitorFile(const std::string& fileName)
+	{
+	/* Add the file to the monitored file map: */
+	monitoredFileMap.setEntry(MonitoredFileHashTable::Entry(fileName,false));
+	}
 
 /***************************
 Methods of class FileLoader:
@@ -170,17 +165,30 @@ void FileLoader::monitorFile(const std::string& path)
 	std::string directory(path.begin(),fnIt);
 	std::string fileName(fnIt,path.end());
 	
-	/* Add the containing directory to the file monitor: */
-	IO::FileMonitor::EventMask eventMask=0x0U;
-	eventMask|=IO::FileMonitor::Modified;
-	eventMask|=IO::FileMonitor::ClosedWrite;
-	eventMask|=IO::FileMonitor::MovedTo;
-	fileMonitor.addPath(directory.c_str(),eventMask,*new ReloadCallback(rootContext,reloadPrompt,fileName));
+	/* Find a reload callback for the containing directory in the map: */
+	ReloadHashTable::Iterator dmIt=directoryMap.findEntry(directory);
+	if(dmIt.isFinished())
+		{
+		/* Create a new reload callback and add it to the directory map: */
+		ReloadCallbackPtr reloadCallback=new ReloadCallback(rootContext,reloadPrompt);
+		dmIt=directoryMap.setAndFindEntry(ReloadHashTable::Entry(directory,reloadCallback));
+		
+		/* Add the containing directory to the file monitor: */
+		IO::FileMonitor::EventMask eventMask=0x0U;
+		eventMask|=IO::FileMonitor::Modified;
+		eventMask|=IO::FileMonitor::ClosedWrite;
+		eventMask|=IO::FileMonitor::MovedTo;
+		fileMonitor.addPath(directory.c_str(),eventMask,*reloadCallback);
+		}
+	
+	/* Start monitoring the contained file from the reload callback for the containing directory: */
+	dmIt->getDest()->monitorFile(fileName);
 	}
 
 FileLoader::FileLoader(Context& sRootContext)
 	:rootContext(sRootContext),
 	 currentDirectory(IO::Directory::getCurrent()),
+	 directoryMap(17),
 	 reloadPrompt(0)
 	{
 	}
